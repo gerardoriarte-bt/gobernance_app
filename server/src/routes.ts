@@ -155,4 +155,72 @@ router.delete('/taxonomies/:id', async (req, res) => {
   }
 });
 
+// --- Users ---
+router.get('/users/:id', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    // Map snake_case to camelCase
+    const row = result.rows[0];
+    const user = {
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      role: row.role,
+      avatar: row.avatar,
+      createdAt: row.created_at,
+      lastLogin: row.last_login
+    };
+    res.json(user);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.post('/users/sync', async (req, res) => {
+  const { id, email, name, role, avatar } = req.body;
+  
+  try {
+    // Check if user exists
+    const check = await pool.query('SELECT id FROM users WHERE id = $1', [id]);
+    
+    if (check.rows.length === 0) {
+      // Create new
+      await pool.query(
+        `INSERT INTO users (id, email, name, role, avatar, last_login) 
+         VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *`,
+        [id, email, name, role || 'trafficker', avatar]
+      );
+    } else {
+      // Update existing
+      await pool.query(
+        `UPDATE users SET name = COALESCE($2, name), avatar = COALESCE($3, avatar), last_login = NOW() 
+         WHERE id = $1 RETURNING *`,
+        [id, name, avatar]
+      );
+    }
+    
+    // Fetch updated profile
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    const row = result.rows[0];
+    const user = {
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      role: row.role,
+      avatar: row.avatar,
+      createdAt: row.created_at,
+      lastLogin: row.last_login
+    };
+    
+    res.json(user);
+  } catch (e: any) {
+    console.error("Sync user error:", e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 export const taxonomyRouter = router;

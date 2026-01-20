@@ -45,6 +45,19 @@ export const initDB = async () => {
       );
     `);
     
+    // Users Table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id VARCHAR(128) PRIMARY KEY,
+        email VARCHAR(255) NOT NULL,
+        name VARCHAR(255),
+        role VARCHAR(50) DEFAULT 'trafficker',
+        avatar TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_login TIMESTAMP
+      );
+    `);
+
     console.log('Database Schema Ready.');
   } catch (error) {
     console.error('Error initializing DB:', error);
