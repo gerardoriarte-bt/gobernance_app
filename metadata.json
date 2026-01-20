@@ -1,0 +1,5 @@
+{
+  "name": "Governance Builder",
+  "description": "A standardized media naming convention builder that enforces strict JSON-schema-based dependencies for Campaigns, Ad Sets, and Ads.",
+  "requestFramePermissions": []
+}

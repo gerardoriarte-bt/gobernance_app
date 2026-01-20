@@ -1,0 +1,31 @@
+
+@import "tailwindcss";
+
+@layer utilities {
+  .animate-slide-infinite {
+    animation: slide-infinite 2s linear infinite;
+  }
+  
+  .animate-spin-slow {
+    animation: spin-slow 60s linear infinite;
+  }
+  
+  .animate-bounce-subtle {
+    animation: bounce-subtle 3s ease-in-out infinite;
+  }
+}
+
+@keyframes slide-infinite {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
