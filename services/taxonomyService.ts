@@ -1,81 +1,92 @@
-
-import { db } from '../utils/firebaseConfig';
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  setDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where 
-} from 'firebase/firestore';
 import { Tenant, Client, SavedTaxonomy } from '../types';
+
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const TaxonomyService = {
   // --- Tenants ---
   async getTenants(): Promise<Tenant[]> {
-    const querySnapshot = await getDocs(collection(db, 'tenants'));
-    return querySnapshot.docs.map(doc => doc.data() as Tenant);
+    const res = await fetch(`${API_URL}/tenants`);
+    if (!res.ok) throw new Error('Failed to fetch tenants');
+    return res.json();
   },
 
   async addTenant(tenant: Tenant): Promise<void> {
-    await setDoc(doc(db, 'tenants', tenant.id), tenant);
+    const res = await fetch(`${API_URL}/tenants`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tenant),
+    });
+    if (!res.ok) throw new Error('Failed to create tenant');
   },
 
   async updateTenant(id: string, name: string): Promise<void> {
-    const ref = doc(db, 'tenants', id);
-    await updateDoc(ref, { name });
+    const res = await fetch(`${API_URL}/tenants/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) throw new Error('Failed to update tenant');
   },
 
   async deleteTenant(id: string): Promise<void> {
-    await deleteDoc(doc(db, 'tenants', id));
+    const res = await fetch(`${API_URL}/tenants/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete tenant');
   },
 
   // --- Clients ---
   async getClients(tenantId?: string): Promise<Client[]> {
-    const colRef = collection(db, 'clients');
-    // If tenantId is provided, filtered query, otherwise fetch all (or refine as needed)
-    // Ideally we fetch all clients for loaded tenants, or just fetch all for now for simplicity
-    const q = tenantId ? query(colRef, where('tenantId', '==', tenantId)) : colRef;
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => doc.data() as Client);
+    let url = `${API_URL}/clients`;
+    if (tenantId) url += `?tenantId=${tenantId}`;
+    
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to fetch clients');
+    return res.json();
   },
 
   async addClient(client: Client): Promise<void> {
-    await setDoc(doc(db, 'clients', client.id), client);
+    const res = await fetch(`${API_URL}/clients`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(client),
+    });
+    if (!res.ok) throw new Error('Failed to create client');
   },
 
   async updateClient(id: string, name: string): Promise<void> {
-    const ref = doc(db, 'clients', id);
-    await updateDoc(ref, { name });
+    const res = await fetch(`${API_URL}/clients/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) throw new Error('Failed to update client');
   },
 
   async deleteClient(id: string): Promise<void> {
-    await deleteDoc(doc(db, 'clients', id));
+    const res = await fetch(`${API_URL}/clients/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete client');
   },
 
   // --- Saved Taxonomies ---
   async getTaxonomies(clientId?: string): Promise<SavedTaxonomy[]> {
-    const colRef = collection(db, 'taxonomies');
-    const q = clientId ? query(colRef, where('clientId', '==', clientId)) : colRef;
-    const querySnapshot = await getDocs(q);
-    // Sort by date desc in memory or add index in firestore
-    const results = querySnapshot.docs.map(doc => doc.data() as SavedTaxonomy);
-    return results.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    let url = `${API_URL}/taxonomies`;
+    if (clientId) url += `?clientId=${clientId}`;
+    
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to fetch taxonomies');
+    return res.json();
   },
 
   async saveTaxonomy(taxonomy: SavedTaxonomy): Promise<void> {
-    await setDoc(doc(db, 'taxonomies', taxonomy.id), taxonomy);
+    const res = await fetch(`${API_URL}/taxonomies`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(taxonomy),
+    });
+    if (!res.ok) throw new Error('Failed to save taxonomy');
   },
 
   async deleteTaxonomy(id: string): Promise<void> {
-    await deleteDoc(doc(db, 'taxonomies', id));
+    const res = await fetch(`${API_URL}/taxonomies/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete taxonomy');
   },
-
-  // --- Dictionaries & Structures (Global Config) ---
-  // In a real multi-tenant app, these might be per-tenant. 
-  // For this version, we'll stick to a global 'config' collection or similar,
-  // but to keep it simple and match current state, we might load them once.
-  // For now, let's focus on the Tenant/Client/Data hierarchy.
 };

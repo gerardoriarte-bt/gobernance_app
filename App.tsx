@@ -5,7 +5,8 @@ import LoginScreen from './components/LoginScreen';
 import { useAuthStore } from './store/useAuthStore';
 
 const App: React.FC = () => {
-  const { isAuthenticated, restoreSession, loginWithGoogle } = useAuthStore();
+  const { isAuthenticated, restoreSession } = useAuthStore();
+  const [isAuthChecking, setIsAuthChecking] = React.useState(true);
 
   React.useEffect(() => {
     let unsubscribe: () => void;
@@ -18,13 +19,9 @@ const App: React.FC = () => {
 
         unsubscribe = onAuthStateChanged(auth, async (user) => {
           if (user) {
-            // User is signed in, restore session
-            console.log("Session found, restoring...", user.email);
-            
-            // Try to fetch profile from DB
+            console.log("✅ Session restored:", user.email);
             let userProfile = await UserService.getUserProfile(user.uid);
             
-            // Auto-sync if missing (safety net)
             if (!userProfile) {
                  userProfile = await UserService.syncUserProfile(user.uid, {
                      name: user.displayName || 'User',
@@ -34,25 +31,32 @@ const App: React.FC = () => {
                  });
             }
 
-            if (userProfile) {
-                restoreSession(userProfile);
-            }
+            if (userProfile) restoreSession(userProfile);
           } else {
-             // User is signed out
-             console.log("No active session.");
+             console.log("❌ No active session.");
           }
+          setIsAuthChecking(false);
         });
       } catch (error) {
          console.error("Auth init failed", error);
+         setIsAuthChecking(false);
       }
     };
 
     initAuth();
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+    return () => { if (unsubscribe) unsubscribe(); };
   }, [restoreSession]);
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0B0F17] text-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          <p className="text-sm opacity-50 uppercase tracking-widest">Verifying Access...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">

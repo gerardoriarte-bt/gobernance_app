@@ -50,8 +50,12 @@ Run the following commands in the project directory:
 # Build the Docker image
 docker build -t governance-builder .
 
-# Run the container mapping port 80
-docker run -d -p 80:80 --name app governance-builder
+# Run the container mapping ports and mounting certs
+docker run -d \
+  -p 80:80 -p 443:443 \
+  -v /etc/letsencrypt/live/governance.lobueno.co/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro \
+  -v /etc/letsencrypt/live/governance.lobueno.co/privkey.pem:/etc/nginx/certs/privkey.pem:ro \
+  --name app governance-builder
 ```
 
 ## Step 5: Verify Deployment

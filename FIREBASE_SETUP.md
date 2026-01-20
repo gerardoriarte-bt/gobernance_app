@@ -1,7 +1,7 @@
 
 # Guía de Configuración: Google Auth + Firebase 🔐
 
-Para que el botón "Login con Google" funcione realmente en tu dominio `goberanance.lobueno.co`, debes seguir estos 3 pasos en la Consola de Firebase.
+Para que el botón "Login con Google" funcione realmente en tu dominio `governance.lobueno.co`, debes seguir estos 3 pasos en la Consola de Firebase.
 
 ## Paso 1: Configurar Dominios Autorizados
 
@@ -10,7 +10,7 @@ Para que el botón "Login con Google" funcione realmente en tu dominio `goberana
 3.  En el menú lateral, ve a **Authentication** -> pestaña **Settings** (Configuración) -> pestaña **Authorized domains** (Dominios autorizados).
 4.  Haz clic en **Add domain**.
 5.  Agrega los siguientes dominios:
-    *   `goberanance.lobueno.co`
+    *   `governance.lobueno.co`
     *   `18.221.232.106` (Tu IP, importante para probar antes de que el DNS propague).
 
 ## Paso 2: Crear App Web en Firebase
@@ -27,7 +27,7 @@ Necesitas poner esos valores en el archivo `.env` dentro de tu servidor. Conéct
 
 ```bash
 # 1. Conectar al servidor
-ssh -i gobernance.pem ubuntu@18.221.232.106
+ssh -i governance.pem ubuntu@18.221.232.106
 
 # 2. Ir a la carpeta
 cd gobernance_app
@@ -60,7 +60,11 @@ sudo docker build -t governance-builder .
 # Reinicia el contenedor
 sudo docker stop app
 sudo docker rm app
-sudo docker run -d -p 80:80 --name app governance-builder
+sudo docker run -d \
+  -p 80:80 -p 443:443 \
+  -v /etc/letsencrypt/live/governance.lobueno.co/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro \
+  -v /etc/letsencrypt/live/governance.lobueno.co/privkey.pem:/etc/nginx/certs/privkey.pem:ro \
+  --name app governance-builder
 ```
 
 ¡Listo! Ahora el login funcionará con usuarios reales.

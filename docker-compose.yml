@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: governance_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securepassword}
+      POSTGRES_DB: ${POSTGRES_DB:-governance}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # 2. Node.js API Backend
+  api:
+    build: 
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: governance_api
+    restart: always
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-securepassword}@db:5432/${POSTGRES_DB:-governance}
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  # 3. React Frontend (Nginx Proxy)
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: governance_app
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # SSL Certs (We map to the directory created by Certbot)
+      - /etc/letsencrypt/live/governance.lobueno.co/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
+      - /etc/letsencrypt/live/governance.lobueno.co/privkey.pem:/etc/nginx/certs/privkey.pem:ro
+    depends_on:
+      - api
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
