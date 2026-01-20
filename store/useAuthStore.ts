@@ -21,21 +21,42 @@ interface AuthState {
 // Initial Mock Data
 const INITIAL_USERS: UserProfile[] = [
   {
-    id: 'usr_admin_001',
+    id: 'usr_jose_001',
+    name: 'Jose Rodriguez',
+    email: 'jose.rodriguez@buentipo.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jose',
+    role: 'admin'
+  },
+  {
+    id: 'usr_santiago_002',
+    name: 'Santiago Rodriguez',
+    email: 'santiago.rodriguez@buentipo.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Santiago',
+    role: 'admin'
+  },
+  {
+    id: 'usr_gerardo_003',
+    name: 'Gerardo Riarte',
+    email: 'gerardo.riarte@buentipo.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gerardo',
+    role: 'admin'
+  },
+  {
+    id: 'usr_admin_000',
     name: 'Super Admin',
     email: 'admin@governance.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
     role: 'admin'
   },
   {
-    id: 'usr_planner_002',
+    id: 'usr_planner_005',
     name: 'Media Planner',
     email: 'planner@agency.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Planner',
     role: 'planner'
   },
   {
-    id: 'usr_trafficker_003',
+    id: 'usr_trafficker_006',
     name: 'Ad Trafficker',
     email: 'ops@agency.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Trafficker',
