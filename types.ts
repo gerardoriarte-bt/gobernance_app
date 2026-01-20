@@ -54,6 +54,8 @@ export interface Client {
   id: string;
   name: string;
   tenantId: string;
+  dictionaries?: Dictionaries;
+  structures?: Structures;
 }
 
 export interface SavedTaxonomy {

@@ -56,7 +56,13 @@ router.get('/clients', async (req, res) => {
     query += ' ORDER BY created_at DESC';
     const result = await pool.query(query, params);
     // Return with camelCase for frontend compatibility (or map it)
-    const mapped = result.rows.map(r => ({ ...r, tenantId: r.tenant_id }));
+    const mapped = result.rows.map(r => ({ 
+      id: r.id, 
+      name: r.name, 
+      tenantId: r.tenant_id, 
+      dictionaries: r.dictionaries, 
+      structures: r.structures 
+    }));
     res.json(mapped);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
@@ -64,10 +70,13 @@ router.get('/clients', async (req, res) => {
 });
 
 router.post('/clients', async (req, res) => {
-  const { id, name, tenantId } = req.body;
+  const { id, name, tenantId, dictionaries, structures } = req.body;
   try {
-    await pool.query('INSERT INTO clients (id, name, tenant_id) VALUES ($1, $2, $3)', [id, name, tenantId]);
-    res.status(201).json({ id, name, tenantId });
+    await pool.query(
+      'INSERT INTO clients (id, name, tenant_id, dictionaries, structures) VALUES ($1, $2, $3, $4, $5)', 
+      [id, name, tenantId, JSON.stringify(dictionaries || {}), JSON.stringify(structures || {})]
+    );
+    res.status(201).json({ id, name, tenantId, dictionaries, structures });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -75,9 +84,36 @@ router.post('/clients', async (req, res) => {
 
 router.put('/clients/:id', async (req, res) => {
   const { id } = req.params;
-  const { name } = req.body;
+  const { name, dictionaries, structures } = req.body;
   try {
-    await pool.query('UPDATE clients SET name = $1 WHERE id = $2', [name, id]);
+    // Dynamic update query
+    let query = 'UPDATE clients SET ';
+    const params = [];
+    const updates = [];
+    let idx = 1;
+
+    if (name !== undefined) {
+      updates.push(`name = $${idx++}`);
+      params.push(name);
+    }
+    if (dictionaries !== undefined) {
+      updates.push(`dictionaries = $${idx++}`);
+      params.push(JSON.stringify(dictionaries));
+    }
+    if (structures !== undefined) {
+      updates.push(`structures = $${idx++}`);
+      params.push(JSON.stringify(structures));
+    }
+
+    if (updates.length === 0) {
+      res.json({ success: true, message: 'No changes' });
+      return;
+    }
+
+    query += updates.join(', ') + ` WHERE id = $${idx}`;
+    params.push(id);
+
+    await pool.query(query, params);
     res.json({ success: true });
   } catch (e: any) {
     res.status(500).json({ error: e.message });

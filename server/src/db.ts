@@ -27,9 +27,15 @@ export const initDB = async () => {
         id VARCHAR(50) PRIMARY KEY,
         tenant_id VARCHAR(50) REFERENCES tenants(id) ON DELETE CASCADE,
         name VARCHAR(255) NOT NULL,
+        dictionaries JSONB,
+        structures JSONB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Migration: Add columns if they don't exist (for existing deployments)
+    await client.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS dictionaries JSONB;`);
+    await client.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS structures JSONB;`);
 
     // Taxonomies Table (Stores JSONB for flexible values)
     await client.query(`

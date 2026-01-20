@@ -55,6 +55,19 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
      }
   },
 
+  // Helper to sync changes to current client
+  syncCurrentClientConfig: async () => {
+    const state = get();
+    if (!state.selectedClientId) return;
+    
+    // Auto-save to server
+    await TaxonomyService.updateClientConfig(
+        state.selectedClientId, 
+        state.dictionaries, 
+        state.structures
+    );
+  },
+
   addDictionaryCategory: (name: string) => {
     set((state) => {
       const sanitizedName = sanitizeCategoryId(name);
@@ -64,9 +77,10 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
         ...state.dictionaries,
         [sanitizedName]: []
       };
-      setStorage('dictionaries', updatedDicts);
+      setStorage('dictionaries', updatedDicts); // Keep local backup
       return { dictionaries: updatedDicts };
     });
+    get().syncCurrentClientConfig(); // Sync to Cloud
   },
 
   deleteDictionaryCategory: (name: string) => {
@@ -84,6 +98,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       setStorage('structures', nextStructures);
       return { dictionaries: updatedDicts, structures: nextStructures };
     });
+    get().syncCurrentClientConfig(); // Sync to Cloud
   },
 
   addDictionaryItem: (field: string, value: string) => {
@@ -98,6 +113,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       setStorage('dictionaries', updatedDicts);
       return { dictionaries: updatedDicts };
     });
+    get().syncCurrentClientConfig(); // Sync to Cloud
   },
 
   deleteDictionaryItem: (field: string, value: string) => {
@@ -110,6 +126,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       setStorage('dictionaries', updatedDicts);
       return { dictionaries: updatedDicts };
     });
+    get().syncCurrentClientConfig(); // Sync to Cloud
   },
 
   toggleCategoryInLevel: (field: string, level: TaxonomyLevel) => {
@@ -142,118 +159,51 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
         generatedStrings: { campaign: campaignStr, adset: adsetStr, ad: adStr }
       };
     });
+    get().syncCurrentClientConfig(); // Sync to Cloud
   },
 
   isFieldInLevel: (field: string, level: TaxonomyLevel) => {
     return get().structures[level].includes(`{${field}}`);
   },
 
-  setFieldValue: (level: TaxonomyLevel, field: string, value: string) => {
-    const state = get();
-    
-    let nextCampaignValues = { ...state.campaignValues };
-    let nextAdsetValues = { ...state.adsetValues };
-    let nextAdValues = { ...state.adValues };
+  selectClient: (id: string | null) => {
+      set((state) => {
+          if (!id) return { selectedClientId: null };
+          
+          const client = state.clients.find(c => c.id === id);
+          if (!client) return { selectedClientId: id };
 
-    if (level === 'campaign') nextCampaignValues[field] = value;
-    if (level === 'adset') nextAdsetValues[field] = value;
-    if (level === 'ad') nextAdValues[field] = value;
-
-    const deps = MASTER_SCHEMA.dependencies[level as keyof typeof MASTER_SCHEMA.dependencies];
-    deps.forEach(dep => {
-      if (dep.field === field && dep.value.includes(value)) {
-        if (dep.lock && dep.to) {
-          if (level === 'campaign') nextCampaignValues[dep.lock] = dep.to;
-          if (level === 'adset') nextAdsetValues[dep.lock] = dep.to;
-          if (level === 'ad') nextAdValues[dep.lock] = dep.to;
-        }
-        
-        if (dep.filter) {
-          const currentVal = level === 'campaign' ? nextCampaignValues[dep.filter] : level === 'adset' ? nextAdsetValues[dep.filter] : nextAdValues[dep.filter];
-          if (currentVal && dep.allow && !dep.allow.includes(currentVal)) {
-            const isSocialProvider = ["Meta", "Meta Ads", "TikTok", "LinkedIn", "Pinterest", "Snapchat", "X"].includes(value);
-            const fallbackValue = (isSocialProvider && dep.filter === 'channel') ? 'Social Media' : '';
-            
-            if (level === 'campaign') nextCampaignValues[dep.filter] = fallbackValue;
-            if (level === 'adset') nextAdsetValues[dep.filter] = fallbackValue;
-            if (level === 'ad') nextAdValues[dep.filter] = fallbackValue;
+          // Load Client Configuration
+          if (client.dictionaries && client.structures) {
+              // Deep merge or replace? Replace is safer for strict governance.
+              return { 
+                  selectedClientId: id,
+                  dictionaries: client.dictionaries,
+                  structures: client.structures
+              };
+          } else {
+              // Fallback to defaults or what's in memory/localstorage if new client
+              return { selectedClientId: id };
           }
-        }
-      }
-    });
-
-    const campaignStr = resolveStructure(state.structures.campaign, nextCampaignValues);
-    const adsetStr = resolveStructure(state.structures.adset, nextAdsetValues, { parentCampaign: campaignStr });
-    const adStr = resolveStructure(state.structures.ad, nextAdValues, { 
-      parentCampaignName: toPascalCase(nextCampaignValues.campaignName || ''), 
-      parentProvider: toPascalCase(nextCampaignValues.provider || '') 
-    });
-
-    set({
-      campaignValues: nextCampaignValues,
-      adsetValues: nextAdsetValues,
-      adValues: nextAdValues,
-      generatedStrings: { campaign: campaignStr, adset: adsetStr, ad: adStr }
-    });
+      });
   },
-
-  resetLevel: (level: TaxonomyLevel) => {
-    set((state) => ({ ...state, [`${level}Values`]: {} }));
-  },
-
-  addTenant: async (name: string) => {
-    const newTenant: Tenant = { id: generateUUID(), name };
-    // Optimistic update
-    set((state) => ({ tenants: [...state.tenants, newTenant] }));
-    try {
-        await TaxonomyService.addTenant(newTenant);
-    } catch (e) {
-        console.error("Add tenant failed", e);
-        // Revert? For now, we assume success or rely on refresh.
-    }
-  },
-
-  updateTenant: async (id: string, name: string) => {
-    set((state) => ({ tenants: state.tenants.map(t => t.id === id ? { ...t, name } : t) }));
-    await TaxonomyService.updateTenant(id, name);
-  },
-
-  deleteTenant: async (id: string) => {
-    set((state) => ({ 
-        tenants: state.tenants.filter(t => t.id !== id),
-        clients: state.clients.filter(c => c.tenantId !== id),
-        selectedTenantId: state.selectedTenantId === id ? null : state.selectedTenantId
-    }));
-    await TaxonomyService.deleteTenant(id);
-    // Also cleanup clients/taxonomies on server? Firestore doesn't cascade delete automatically.
-    // For this MVP, we leave orphans or handle server-side.
-  },
-
-  selectTenant: (id: string | null) => set({ selectedTenantId: id, selectedClientId: null }),
 
   addClient: async (name: string) => {
-    const { selectedTenantId } = get();
+    const { selectedTenantId, dictionaries, structures } = get();
     if (!selectedTenantId) return;
 
-    const newClient: Client = { id: generateUUID(), name, tenantId: selectedTenantId };
+    // Save current state as the initial config for the new client
+    const newClient: Client = { 
+        id: generateUUID(), 
+        name, 
+        tenantId: selectedTenantId,
+        dictionaries,
+        structures 
+    };
+
     set((state) => ({ clients: [...state.clients, newClient] }));
     await TaxonomyService.addClient(newClient);
   },
-
-  updateClient: async (id: string, name: string) => {
-    set((state) => ({ clients: state.clients.map(c => c.id === id ? { ...c, name } : c) }));
-    await TaxonomyService.updateClient(id, name);
-  },
-
-  deleteClient: async (id: string) => {
-    set((state) => ({ 
-        clients: state.clients.filter(c => c.id !== id),
-        selectedClientId: state.selectedClientId === id ? null : state.selectedClientId
-    }));
-    await TaxonomyService.deleteClient(id);
-  },
-
-  selectClient: (id: string | null) => set({ selectedClientId: id }),
 
   saveTaxonomy: async () => {
     const state = get();
