@@ -2,7 +2,7 @@
 import { MasterSchema } from './types';
 
 export const MASTER_SCHEMA: MasterSchema = {
-  "config": { "separator": "|", "case": "PascalCase" },
+  "config": { "separator": "/", "case": "PascalCase" },
   "dictionaries": {
     "country": ["Mexico", "Colombia", "Brazil", "Chile", "Peru"],
     "budgetSource": ["Brand", "Performance", "Ecommerce"],
@@ -20,9 +20,9 @@ export const MASTER_SCHEMA: MasterSchema = {
     "creativeVariation": ["Main", "Men", "Women", "CoGender", "Cutdown"]
   },
   "structures": {
-    "campaign": "{country}|{budgetSource}|{campaignName}|{provider}|{objective}|{channel}|{funnel}",
-    "adset": "{parentCampaign}|{audienceStrategy}|{audienceSegment}|{placement}",
-    "ad": "{parentCampaignName}|{parentProvider}|{creativeFormat}|{creativeSpecs}|{creativeConcept}|{creativeVariation}"
+    "campaign": "{country}/{budgetSource}/{campaignName}/{provider}/{objective}/{channel}/{funnel}",
+    "adset": "{parentCampaign}/{audienceStrategy}/{audienceSegment}/{placement}",
+    "ad": "{parentCampaignName}/{parentProvider}/{creativeFormat}/{creativeSpecs}/{creativeConcept}/{creativeVariation}"
   },
   "dependencies": {
     "campaign": [

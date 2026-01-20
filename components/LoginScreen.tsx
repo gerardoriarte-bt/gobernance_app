@@ -18,7 +18,7 @@ import { UserRole } from '../types';
       <div className="max-w-4xl w-full z-10">
         <div className="text-center mb-16 space-y-6">
            <div className="inline-flex items-center justify-center mb-6">
-              <img src="/lobueno-logo.png" alt="Lo Bueno" className="h-[200px] w-auto object-contain" />
+              <img src="/lobueno-logo.png" alt="Lo Bueno" className="h-[140px] w-auto object-contain" />
            </div>
            
            <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight hidden">

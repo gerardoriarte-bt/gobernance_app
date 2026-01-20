@@ -90,8 +90,8 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       const nextStructures = { ...state.structures };
       (Object.keys(nextStructures) as TaxonomyLevel[]).forEach(level => {
         nextStructures[level] = nextStructures[level]
-          .replace(new RegExp(`\\|?\\{${name}\\}`, 'g'), '')
-          .replace(/^\|/, '');
+          .replace(new RegExp(`\\/?\\{${name}\\}`, 'g'), '')
+          .replace(/^\//, '');
       });
 
       setStorage('dictionaries', updatedDicts);
@@ -138,10 +138,10 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       let nextStructure = currentStructure;
       if (isPresent) {
         nextStructure = nextStructure
-          .replace(new RegExp(`\\|?${token.replace('{', '\\{').replace('}', '\\}')}`, 'g'), '')
-          .replace(/^\|/, '');
+          .replace(new RegExp(`\\/?\\{${token.replace('{', '\\{').replace('}', '\\}')}\\}`, 'g'), '')
+          .replace(/^\//, '');
       } else {
-        nextStructure = nextStructure ? `${nextStructure}|${token}` : token;
+        nextStructure = nextStructure ? `${nextStructure}/{${field}}` : token;
       }
 
       const nextStructures = { ...state.structures, [level]: nextStructure };
