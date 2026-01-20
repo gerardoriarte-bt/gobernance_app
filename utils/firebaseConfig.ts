@@ -14,5 +14,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+import { setPersistence, browserLocalPersistence } from 'firebase/auth';
+
+// Ensure persistence is enabled immediately
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error("Firebase persistence error:", error);
+});
+
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
