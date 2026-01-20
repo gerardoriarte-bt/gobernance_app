@@ -10,6 +10,7 @@ interface AuthState {
   
   // Auth Actions
   loginWithGoogle: () => Promise<void>;
+  restoreSession: (user: UserProfile) => void;
   logout: () => Promise<void>;
   
   // CRUD Actions
@@ -167,6 +168,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       set({ isLoading: false });
     }
+  },
+
+  restoreSession: (userProfile: UserProfile) => {
+      set({ 
+          user: userProfile, 
+          isAuthenticated: true, 
+          isLoading: false 
+      });
   },
 
   logout: async () => {
