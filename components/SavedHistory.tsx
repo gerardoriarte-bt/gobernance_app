@@ -42,22 +42,24 @@ const SavedHistory: React.FC<SavedHistoryProps> = ({ onEdit }) => {
           </div>
           <div>
              <h2 className="text-xl font-black text-slate-800 tracking-tight">Naming Repository</h2>
-             <p className="text-xs text-slate-500 font-medium">History of all generated conventions across organizations.</p>
+             <p className="text-xs text-slate-500 font-medium">
+               Repository of generated naming conventions. Use the filter on the right to toggle between <span className="text-indigo-600 font-bold">Current</span> (filtered by selected Tenant/Client) and <span className="text-indigo-600 font-bold">All</span> records.
+             </p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl">
+        <div className="flex bg-slate-100 p-1 rounded-xl">
            <button 
              onClick={() => setShowAll(false)}
-             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${!showAll ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${!showAll ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
            >
-              <Filter size={14} /> Local Context
+              <Filter size={14} /> Current Selection
            </button>
            <button 
              onClick={() => setShowAll(true)}
-             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showAll ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${showAll ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
            >
-              <Globe size={14} /> Global View
+              <Globe size={14} /> All Records
            </button>
         </div>
       </div>
@@ -136,9 +138,9 @@ const SavedHistory: React.FC<SavedHistoryProps> = ({ onEdit }) => {
                   <div className="flex flex-col gap-2 items-end">
                     <button
                       onClick={() => handleEdit(item)}
-                      className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                      className="flex items-center gap-2 bg-white border-2 border-indigo-100 text-indigo-600 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest hover:border-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
                     >
-                      <Edit3 size={14} /> Restore
+                      <Edit3 size={14} /> Edit
                     </button>
                     <button
                       onClick={() => { if(confirm('Permanently delete this record?')) deleteSavedTaxonomy(item.id); }}
