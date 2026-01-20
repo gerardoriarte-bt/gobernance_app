@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { TaxonomyState, TaxonomyLevel, Client, SavedTaxonomy, Tenant, Dictionaries, Structures } from '../types';
 import { MASTER_SCHEMA } from '../constants';
 import { resolveStructure, toPascalCase, sanitizeCategoryId } from '../utils/naming';
+import { generateUUID } from '../utils/uuid';
 
 const getStorage = <T>(key: string, defaultValue: T): T => {
   if (typeof window === 'undefined') return defaultValue;
@@ -184,7 +185,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
   },
 
   addTenant: (name: string) => {
-    const newTenant: Tenant = { id: crypto.randomUUID(), name };
+    const newTenant: Tenant = { id: generateUUID(), name };
     set((state) => {
       const updated = [...state.tenants, newTenant];
       setStorage('tenants', updated);
@@ -226,7 +227,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     const { selectedTenantId } = get();
     if (!selectedTenantId) return;
 
-    const newClient: Client = { id: crypto.randomUUID(), name, tenantId: selectedTenantId };
+    const newClient: Client = { id: generateUUID(), name, tenantId: selectedTenantId };
     set((state) => {
       const updated = [...state.clients, newClient];
       setStorage('clients', updated);
@@ -267,7 +268,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     
     const campaignName = state.campaignValues.campaignName || 'Unnamed_Campaign';
     const newRecord: SavedTaxonomy = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       tenantId: state.selectedTenantId,
       clientId: state.selectedClientId,
       campaignName: campaignName,
