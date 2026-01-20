@@ -12,7 +12,12 @@ const TaxonomyBuilder: React.FC = () => {
   const { 
     selectedClientId, 
     selectedTenantId, 
+    fetchInitialData
   } = useTaxonomyStore();
+
+  React.useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
 
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';

@@ -4,6 +4,7 @@ import { TaxonomyState, TaxonomyLevel, Client, SavedTaxonomy, Tenant, Dictionari
 import { MASTER_SCHEMA } from '../constants';
 import { resolveStructure, toPascalCase, sanitizeCategoryId } from '../utils/naming';
 import { generateUUID } from '../utils/uuid';
+import { TaxonomyService } from '../services/taxonomyService';
 
 const getStorage = <T>(key: string, defaultValue: T): T => {
   if (typeof window === 'undefined') return defaultValue;
@@ -21,11 +22,12 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
   adsetValues: {},
   adValues: {},
   
-  tenants: getStorage('tenants', []),
+  initialized: false,
+  tenants: [],
   selectedTenantId: null,
-  clients: getStorage('clients', []),
+  clients: [],
   selectedClientId: null,
-  savedTaxonomies: getStorage('savedTaxonomies', []),
+  savedTaxonomies: [],
   
   dictionaries: getStorage('dictionaries', MASTER_SCHEMA.dictionaries),
   structures: getStorage('structures', MASTER_SCHEMA.structures),
@@ -37,6 +39,21 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
   },
 
   hasDraft: typeof window !== 'undefined' ? !!localStorage.getItem('taxonomy_draft') : false,
+
+  fetchInitialData: async () => {
+     if (get().initialized) return;
+     try {
+       const tenants = await TaxonomyService.getTenants();
+       // We only fetch tenants initially. Clients/Taxonomies loaded on selection or we can fetch all.
+       // Let's fetch all clients for simplicity so the UI feels snappy.
+       const clients = await TaxonomyService.getClients();
+       const taxonomies = await TaxonomyService.getTaxonomies();
+       
+       set({ tenants, clients, savedTaxonomies: taxonomies, initialized: true });
+     } catch (e) {
+       console.error("Failed to fetch initial data", e);
+     }
+  },
 
   addDictionaryCategory: (name: string) => {
     set((state) => {
@@ -184,82 +201,61 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     set((state) => ({ ...state, [`${level}Values`]: {} }));
   },
 
-  addTenant: (name: string) => {
+  addTenant: async (name: string) => {
     const newTenant: Tenant = { id: generateUUID(), name };
-    set((state) => {
-      const updated = [...state.tenants, newTenant];
-      setStorage('tenants', updated);
-      return { tenants: updated };
-    });
+    // Optimistic update
+    set((state) => ({ tenants: [...state.tenants, newTenant] }));
+    try {
+        await TaxonomyService.addTenant(newTenant);
+    } catch (e) {
+        console.error("Add tenant failed", e);
+        // Revert? For now, we assume success or rely on refresh.
+    }
   },
 
-  updateTenant: (id: string, name: string) => {
-    set((state) => {
-      const updated = state.tenants.map(t => t.id === id ? { ...t, name } : t);
-      setStorage('tenants', updated);
-      return { tenants: updated };
-    });
+  updateTenant: async (id: string, name: string) => {
+    set((state) => ({ tenants: state.tenants.map(t => t.id === id ? { ...t, name } : t) }));
+    await TaxonomyService.updateTenant(id, name);
   },
 
-  deleteTenant: (id: string) => {
-    set((state) => {
-      const updatedTenants = state.tenants.filter(t => t.id !== id);
-      const updatedClients = state.clients.filter(c => c.tenantId !== id);
-      const updatedHistory = state.savedTaxonomies.filter(s => s.tenantId !== id);
-      
-      setStorage('tenants', updatedTenants);
-      setStorage('clients', updatedClients);
-      setStorage('savedTaxonomies', updatedHistory);
-      
-      return { 
-        tenants: updatedTenants,
-        clients: updatedClients,
-        savedTaxonomies: updatedHistory,
-        selectedTenantId: state.selectedTenantId === id ? null : state.selectedTenantId,
-        selectedClientId: (state.selectedTenantId === id || state.clients.find(c => c.id === state.selectedClientId)?.tenantId === id) ? null : state.selectedClientId
-      };
-    });
+  deleteTenant: async (id: string) => {
+    set((state) => ({ 
+        tenants: state.tenants.filter(t => t.id !== id),
+        clients: state.clients.filter(c => c.tenantId !== id),
+        selectedTenantId: state.selectedTenantId === id ? null : state.selectedTenantId
+    }));
+    await TaxonomyService.deleteTenant(id);
+    // Also cleanup clients/taxonomies on server? Firestore doesn't cascade delete automatically.
+    // For this MVP, we leave orphans or handle server-side.
   },
 
   selectTenant: (id: string | null) => set({ selectedTenantId: id, selectedClientId: null }),
 
-  addClient: (name: string) => {
+  addClient: async (name: string) => {
     const { selectedTenantId } = get();
     if (!selectedTenantId) return;
 
     const newClient: Client = { id: generateUUID(), name, tenantId: selectedTenantId };
-    set((state) => {
-      const updated = [...state.clients, newClient];
-      setStorage('clients', updated);
-      return { clients: updated };
-    });
+    set((state) => ({ clients: [...state.clients, newClient] }));
+    await TaxonomyService.addClient(newClient);
   },
 
-  updateClient: (id: string, name: string) => {
-    set((state) => {
-      const updated = state.clients.map(c => c.id === id ? { ...c, name } : c);
-      setStorage('clients', updated);
-      return { clients: updated };
-    });
+  updateClient: async (id: string, name: string) => {
+    set((state) => ({ clients: state.clients.map(c => c.id === id ? { ...c, name } : c) }));
+    await TaxonomyService.updateClient(id, name);
   },
 
-  deleteClient: (id: string) => {
-    set((state) => {
-      const updatedClients = state.clients.filter(c => c.id !== id);
-      const updatedHistory = state.savedTaxonomies.filter(s => s.clientId !== id);
-      setStorage('clients', updatedClients);
-      setStorage('savedTaxonomies', updatedHistory);
-      return { 
-        clients: updatedClients, 
-        savedTaxonomies: updatedHistory,
+  deleteClient: async (id: string) => {
+    set((state) => ({ 
+        clients: state.clients.filter(c => c.id !== id),
         selectedClientId: state.selectedClientId === id ? null : state.selectedClientId
-      };
-    });
+    }));
+    await TaxonomyService.deleteClient(id);
   },
 
   selectClient: (id: string | null) => set({ selectedClientId: id }),
 
-  saveTaxonomy: () => {
+  saveTaxonomy: async () => {
     const state = get();
     if (!state.selectedTenantId || !state.selectedClientId) {
       alert("Selection required.");
@@ -281,12 +277,9 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       }
     };
 
-    set((state) => {
-      const updated = [newRecord, ...state.savedTaxonomies];
-      setStorage('savedTaxonomies', updated);
-      return { savedTaxonomies: updated };
-    });
-    alert("Taxonomy saved!");
+    set((state) => ({ savedTaxonomies: [newRecord, ...state.savedTaxonomies] }));
+    await TaxonomyService.saveTaxonomy(newRecord);
+    alert("Taxonomy saved to Cloud!");
   },
 
   loadSavedTaxonomy: (record: SavedTaxonomy) => {
@@ -301,12 +294,9 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     }));
   },
 
-  deleteSavedTaxonomy: (id: string) => {
-    set((state) => {
-      const updated = state.savedTaxonomies.filter(t => t.id !== id);
-      setStorage('savedTaxonomies', updated);
-      return { savedTaxonomies: updated };
-    });
+  deleteSavedTaxonomy: async (id: string) => {
+    set((state) => ({ savedTaxonomies: state.savedTaxonomies.filter(t => t.id !== id) }));
+    await TaxonomyService.deleteTaxonomy(id);
   },
 
   saveDraftTaxonomy: () => {

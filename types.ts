@@ -78,6 +78,9 @@ export interface TaxonomyState {
   campaignValues: Record<string, string>;
   adsetValues: Record<string, string>;
   adValues: Record<string, string>;
+  
+  initialized: boolean;
+  fetchInitialData: () => Promise<void>;
 
   tenants: Tenant[];
   selectedTenantId: string | null;
