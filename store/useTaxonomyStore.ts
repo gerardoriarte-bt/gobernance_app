@@ -166,6 +166,89 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     return get().structures[level].includes(`{${field}}`);
   },
 
+  setFieldValue: (level: TaxonomyLevel, field: string, value: string) => {
+    const state = get();
+    
+    let nextCampaignValues = { ...state.campaignValues };
+    let nextAdsetValues = { ...state.adsetValues };
+    let nextAdValues = { ...state.adValues };
+
+    if (level === 'campaign') nextCampaignValues[field] = value;
+    if (level === 'adset') nextAdsetValues[field] = value;
+    if (level === 'ad') nextAdValues[field] = value;
+
+    const deps = MASTER_SCHEMA.dependencies[level as keyof typeof MASTER_SCHEMA.dependencies];
+    deps.forEach(dep => {
+      if (dep.field === field && dep.value.includes(value)) {
+        if (dep.lock && dep.to) {
+          if (level === 'campaign') nextCampaignValues[dep.lock] = dep.to;
+          if (level === 'adset') nextAdsetValues[dep.lock] = dep.to;
+          if (level === 'ad') nextAdValues[dep.lock] = dep.to;
+        }
+        
+        if (dep.filter) {
+          const currentVal = level === 'campaign' ? nextCampaignValues[dep.filter] : level === 'adset' ? nextAdsetValues[dep.filter] : nextAdValues[dep.filter];
+          if (currentVal && dep.allow && !dep.allow.includes(currentVal)) {
+            const isSocialProvider = ["Meta", "Meta Ads", "TikTok", "LinkedIn", "Pinterest", "Snapchat", "X"].includes(value);
+            const fallbackValue = (isSocialProvider && dep.filter === 'channel') ? 'Social Media' : '';
+            
+            if (level === 'campaign') nextCampaignValues[dep.filter] = fallbackValue;
+            if (level === 'adset') nextAdsetValues[dep.filter] = fallbackValue;
+            if (level === 'ad') nextAdValues[dep.filter] = fallbackValue;
+          }
+        }
+      }
+    });
+
+    const campaignStr = resolveStructure(state.structures.campaign, nextCampaignValues);
+    const adsetStr = resolveStructure(state.structures.adset, nextAdsetValues, { parentCampaign: campaignStr });
+    const adStr = resolveStructure(state.structures.ad, nextAdValues, { 
+      parentCampaignName: toPascalCase(nextCampaignValues.campaignName || ''), 
+      parentProvider: toPascalCase(nextCampaignValues.provider || '') 
+    });
+
+    set({
+      campaignValues: nextCampaignValues,
+      adsetValues: nextAdsetValues,
+      adValues: nextAdValues,
+      generatedStrings: { campaign: campaignStr, adset: adsetStr, ad: adStr }
+    });
+  },
+
+  resetLevel: (level: TaxonomyLevel) => {
+    set((state) => ({ ...state, [`${level}Values`]: {} }));
+  },
+
+  addTenant: async (name: string) => {
+    const newTenant: Tenant = { id: generateUUID(), name };
+    // Optimistic update
+    set((state) => ({ tenants: [...state.tenants, newTenant] }));
+    try {
+        await TaxonomyService.addTenant(newTenant);
+    } catch (e) {
+        console.error("Add tenant failed", e);
+        // Revert? For now, we assume success or rely on refresh.
+    }
+  },
+
+  updateTenant: async (id: string, name: string) => {
+    set((state) => ({ tenants: state.tenants.map(t => t.id === id ? { ...t, name } : t) }));
+    await TaxonomyService.updateTenant(id, name);
+  },
+
+  deleteTenant: async (id: string) => {
+    set((state) => ({ 
+        tenants: state.tenants.filter(t => t.id !== id),
+        clients: state.clients.filter(c => c.tenantId !== id),
+        selectedTenantId: state.selectedTenantId === id ? null : state.selectedTenantId
+    }));
+    await TaxonomyService.deleteTenant(id);
+    // Also cleanup clients/taxonomies on server? Firestore doesn't cascade delete automatically.
+    // For this MVP, we leave orphans or handle server-side.
+  },
+
+  selectTenant: (id: string | null) => set({ selectedTenantId: id, selectedClientId: null }),
+
   selectClient: (id: string | null) => {
       set((state) => {
           if (!id) return { selectedClientId: null };
