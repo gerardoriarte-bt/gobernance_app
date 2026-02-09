@@ -192,6 +192,24 @@ router.delete('/taxonomies/:id', async (req, res) => {
 });
 
 // --- Users ---
+router.get('/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM users ORDER BY created_at DESC');
+    const users = result.rows.map(row => ({
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      role: row.role,
+      avatar: row.avatar,
+      createdAt: row.created_at,
+      lastLogin: row.last_login
+    }));
+    res.json(users);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.get('/users/:id', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);

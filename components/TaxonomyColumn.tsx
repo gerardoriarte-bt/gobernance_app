@@ -141,7 +141,7 @@ const TaxonomyColumn: React.FC<TaxonomyColumnProps> = ({ level, title, descripti
               </div>
               
               <div className="relative">
-                {field === 'creativeVariation' || field === 'campaignName' ? (
+                {field === 'creativeVariation' ? (
                   <div className="relative">
                     <input
                       type="text"

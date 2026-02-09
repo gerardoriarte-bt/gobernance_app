@@ -17,6 +17,7 @@ interface AuthState {
   addUser: (user: Omit<UserProfile, 'id' | 'avatar'>) => void;
   updateUser: (id: string, data: Partial<UserProfile>) => void;
   deleteUser: (id: string) => void;
+  fetchAllUsers: () => Promise<void>;
 }
 
 // Initial Mock Data
@@ -24,23 +25,37 @@ const INITIAL_USERS: UserProfile[] = [
   {
     id: 'usr_jose_001',
     name: 'Jose Rodriguez',
-    email: 'jose.rodriguez@buentipo.com',
+    email: 'jose.rodriguez@lobueno.co',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jose',
     role: 'admin'
   },
   {
     id: 'usr_santiago_002',
-    name: 'Santiago Rodriguez',
-    email: 'santiago.rodriguez@buentipo.com',
+    name: 'Santiago Rodriguez Rivera',
+    email: 'santiago.rodriguez@lobueno.co',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Santiago',
     role: 'admin'
   },
   {
     id: 'usr_gerardo_003',
-    name: 'Gerardo Riarte',
+    name: 'Gerardo Carlos Riarte',
     email: 'gerardo.riarte@buentipo.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gerardo',
     role: 'admin'
+  },
+  {
+    id: 'usr_christian_004',
+    name: 'Christian Eduardo Martinez Moreno',
+    email: 'christian.martinez@lobueno.co',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Christian',
+    role: 'admin'
+  },
+  {
+    id: 'usr_joffre_005',
+    name: 'Joffre Carmona',
+    email: 'joffre@buentipo.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Joffre',
+    role: 'trafficker'
   },
   {
     id: 'usr_admin_000',
@@ -48,20 +63,6 @@ const INITIAL_USERS: UserProfile[] = [
     email: 'admin@governance.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
     role: 'admin'
-  },
-  {
-    id: 'usr_planner_005',
-    name: 'Media Planner',
-    email: 'planner@agency.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Planner',
-    role: 'planner'
-  },
-  {
-    id: 'usr_trafficker_006',
-    name: 'Ad Trafficker',
-    email: 'ops@agency.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Trafficker',
-    role: 'trafficker'
   }
 ];
 
@@ -113,6 +114,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                   isAuthenticated: true, 
                   isLoading: false 
               });
+              await get().fetchAllUsers();
               return;
           }
 
@@ -176,6 +178,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isAuthenticated: true, 
           isLoading: false 
       });
+      get().fetchAllUsers();
   },
 
   logout: async () => {
@@ -220,5 +223,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       setStorage('users_db', updatedUsers);
       return { users: updatedUsers };
     });
+  },
+
+  fetchAllUsers: async () => {
+    const { UserService } = await import('../services/userService');
+    const users = await UserService.getAllUsers();
+    if (users && users.length > 0) {
+      set({ users });
+      setStorage('users_db', users);
+    }
   }
 }));

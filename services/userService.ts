@@ -40,5 +40,19 @@ export const UserService = {
        console.error("Error syncing user:", error);
        throw error;
     }
+  },
+  
+  /**
+   * Fetches all registered users from the API.
+   */
+  getAllUsers: async (): Promise<UserProfile[]> => {
+    try {
+      const res = await fetch(`${API_URL}/users`);
+      if (!res.ok) throw new Error('Failed to fetch users');
+      return await res.json();
+    } catch (error) {
+       console.error("Error fetching all users:", error);
+       return [];
+    }
   }
 };

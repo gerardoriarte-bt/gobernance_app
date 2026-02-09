@@ -24,6 +24,8 @@ const DictionaryManager: React.FC = () => {
 
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';
+  const isPlanner = user?.role === 'planner';
+  const canModify = isAdmin || isPlanner;
 
   
   const fields = Object.keys(dictionaries);
@@ -126,7 +128,7 @@ const DictionaryManager: React.FC = () => {
         {/* Sidebar: Category Master List */}
         <div className="w-full lg:w-80 bg-slate-50/30 border-r border-slate-100 flex flex-col">
           <div className="p-6 border-b border-slate-100">
-            {isAdmin ? (
+            {canModify ? (
               <>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block flex items-center gap-2">
                   Create New DNA Segment
@@ -190,7 +192,7 @@ const DictionaryManager: React.FC = () => {
                      <LevelIndicators field={field} isSelected={isSelected} />
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    {isAdmin && (
+                    {canModify && (
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteCategory(field); }}
                         className={`p-1 transition-opacity ${isSelected ? 'text-white/50 hover:text-white' : 'text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100'}`}
@@ -279,12 +281,12 @@ const DictionaryManager: React.FC = () => {
                           return (
                              <button
                                 key={level}
-                                onClick={() => isAdmin && toggleCategoryInLevel(selectedField, level)}
+                                onClick={() => canModify && toggleCategoryInLevel(selectedField, level)}
                                 className={`w-full relative z-10 flex items-center justify-between p-4 rounded-3xl border-2 transition-all duration-300 group/btn ${
                                    active 
                                    ? `bg-white ${levelActiveBorder[level]} ${levelActiveText[level]} shadow-xl ${levelActiveShadow[level]} scale-[1.03]` 
                                    : 'bg-slate-50/50 border-slate-100 text-slate-300 hover:border-slate-300 hover:bg-white'
-                                } ${!isAdmin ? 'cursor-not-allowed opacity-80' : ''}`}
+                                } ${!canModify ? 'cursor-not-allowed opacity-80' : ''}`}
                              >
                                 <div className="flex items-center gap-4">
                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${

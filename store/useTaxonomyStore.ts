@@ -147,12 +147,12 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       const nextStructures = { ...state.structures, [level]: nextStructure };
       setStorage('structures', nextStructures);
       
-      const campaignStr = resolveStructure(nextStructures.campaign, state.campaignValues);
-      const adsetStr = resolveStructure(nextStructures.adset, state.adsetValues, { parentCampaign: campaignStr });
+      const campaignStr = resolveStructure(nextStructures.campaign, state.campaignValues).toUpperCase();
+      const adsetStr = resolveStructure(nextStructures.adset, state.adsetValues, { parentCampaign: campaignStr }).toUpperCase();
       const adStr = resolveStructure(nextStructures.ad, state.adValues, { 
         parentCampaignName: toPascalCase(state.campaignValues.campaignName || ''), 
         parentProvider: toPascalCase(state.campaignValues.provider || '') 
-      });
+      }).toUpperCase();
 
       return { 
         structures: nextStructures,
@@ -200,12 +200,12 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       }
     });
 
-    const campaignStr = resolveStructure(state.structures.campaign, nextCampaignValues);
-    const adsetStr = resolveStructure(state.structures.adset, nextAdsetValues, { parentCampaign: campaignStr });
+    const campaignStr = resolveStructure(state.structures.campaign, nextCampaignValues).toUpperCase();
+    const adsetStr = resolveStructure(state.structures.adset, nextAdsetValues, { parentCampaign: campaignStr }).toUpperCase();
     const adStr = resolveStructure(state.structures.ad, nextAdValues, { 
       parentCampaignName: toPascalCase(nextCampaignValues.campaignName || ''), 
       parentProvider: toPascalCase(nextCampaignValues.provider || '') 
-    });
+    }).toUpperCase();
 
     set({
       campaignValues: nextCampaignValues,
@@ -347,12 +347,12 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     const draft = JSON.parse(draftStr);
     
     set((state) => {
-      const campaignStr = resolveStructure(state.structures.campaign, draft.campaignValues);
-      const adsetStr = resolveStructure(state.structures.adset, draft.adsetValues, { parentCampaign: campaignStr });
+      const campaignStr = resolveStructure(state.structures.campaign, draft.campaignValues).toUpperCase();
+      const adsetStr = resolveStructure(state.structures.adset, draft.adsetValues, { parentCampaign: campaignStr }).toUpperCase();
       const adStr = resolveStructure(state.structures.ad, draft.adValues, { 
         parentCampaignName: toPascalCase(draft.campaignValues.campaignName || ''), 
         parentProvider: toPascalCase(draft.campaignValues.provider || '') 
-      });
+      }).toUpperCase();
 
       return {
         ...state,
