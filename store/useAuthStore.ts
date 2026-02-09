@@ -63,6 +63,13 @@ const INITIAL_USERS: UserProfile[] = [
     email: 'admin@governance.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
     role: 'admin'
+  },
+  {
+    id: 'usr_planner_007',
+    name: 'Demo Planner',
+    email: 'planner@governance.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Planner',
+    role: 'planner'
   }
 ];
 
