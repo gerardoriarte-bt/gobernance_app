@@ -23,6 +23,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
   adValues: {},
   
   initialized: false,
+  mediaOwner: null,
   tenants: [],
   selectedTenantId: null,
   clients: [],
@@ -44,8 +45,6 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
      if (get().initialized) return;
      try {
        const tenants = await TaxonomyService.getTenants();
-       // We only fetch tenants initially. Clients/Taxonomies loaded on selection or we can fetch all.
-       // Let's fetch all clients for simplicity so the UI feels snappy.
        const clients = await TaxonomyService.getClients();
        const taxonomies = await TaxonomyService.getTaxonomies();
        
@@ -54,6 +53,12 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
        console.error("Failed to fetch initial data", e);
      }
   },
+
+  setMediaOwner: (owner) => set({ 
+    mediaOwner: owner,
+    selectedTenantId: null, // Reset selection
+    selectedClientId: null 
+  }),
 
   // Helper to sync changes to current client
   syncCurrentClientConfig: async () => {
@@ -200,12 +205,127 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       }
     });
 
-    const campaignStr = resolveStructure(state.structures.campaign, nextCampaignValues).toUpperCase();
-    const adsetStr = resolveStructure(state.structures.adset, nextAdsetValues, { parentCampaign: campaignStr }).toUpperCase();
+    // --- CID Governance: Dynamic Token Injection ---
+    if (level === 'campaign' && (field === 'provider' || field === 'launchDate')) {
+         // Re-evaluate whenever provider OR launchDate changes to keep things fresh?
+         // Actually, we just need to ensure the logic runs.
+         // But we only need to inject IDs based on Provider.
+    }
+
+    // Force injection logic if provider changed
+    if (level === 'campaign' && field === 'provider') {
+         const isMeta = ['Meta', 'Facebook', 'Meta Ads', 'Instagram'].includes(value);
+         const isGoogle = ['Google Ads', 'Google', 'YouTube', 'DV360'].includes(value);
+
+         if (isMeta) {
+             nextCampaignValues['campaignId'] = '{{campaign.id}}';
+             nextAdsetValues['adsetId'] = '{{adset.id}}';
+             nextAdValues['adId'] = '{{ad.id}}';
+         } else if (isGoogle) {
+             nextCampaignValues['campaignId'] = '{campaignid}';
+             nextAdsetValues['adsetId'] = '{adgroupid}';
+             nextAdValues['adId'] = '{creative} {matchtype} {keyword}'; // Spaces as requested
+         } else {
+             // Random ID Fallback for other providers
+             const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+             nextCampaignValues['campaignId'] = `CID_${randomId}`;
+             nextAdsetValues['adsetId'] = `AID_${randomId}`;
+             nextAdValues['adId'] = `CR_${randomId}`;
+         }
+    }
+    // ------------------------------------------------
+
+    // Format Launch Date to DDMMYYYY for the string generation specifically
+    // We stored it as YYYY-MM-DD or DDMMYYYY in the component?
+    // In TaxonomyColumn we stored it as DDMMYYYY.
+    // If we need to ensure it, we can check here.
+    // But since the component handles the input -> value transform, we assume 'value' is correct for the string.
+
+    // Calculate Dynamic Strings
+    // We need to inject Media Owner into the Campaign String if it's not part of the structure but required
+    // The current structure is likely just {mediaOwner}_{campaignName}... or similar.
+    // If the structure in constants.ts DOES NOT include {mediaOwner}, we might need to prepend it manually 
+    // OR the user needs to update the structure. 
+    // Given "CID Governance" implies we control the structure, let's prepend it if it's not there?
+    // User said: "Faltan estos campos en el CID: Media Owner..."
+    // Let's assume we prepend it to the resolved string if it's not present.
+    
+    // --- CID Governance: Custom Structure Generation ---
+    // Order: Channel/Country/SubChannel/Provider/Name/Objective/Funnel/Budget/Date/Owner/IDs
+    
+    // 1. MarketingChannel (channel)
+    const pPossibleChannel = nextCampaignValues['channel'] || 'UNK';
+    
+    // 2. Country
+    const pCountry = nextCampaignValues['country'] || 'UNK';
+    
+    // 3. SubChannel
+    const pSubChannel = nextCampaignValues['subChannel'] || 'UNK';
+    
+    // 4. Provider
+    const pProvider = nextCampaignValues['provider'] || 'UNK';
+    
+    // 5. CampaignName
+    const pName = nextCampaignValues['campaignName'] || 'UNK';
+    
+    // 6. Objective
+    const pObjective = nextCampaignValues['objective'] || 'UNK';
+    
+    // 7. Funnel
+    const pFunnel = nextCampaignValues['funnel'] || 'UNK';
+    
+    // 8. Budget
+    const pBudget = nextCampaignValues['budgetSource'] || 'UNK';
+    
+    // 9. LaunchDate (Format DDMMYYYY)
+    let pDate = nextCampaignValues['launchDate'] || 'UNK';
+    
+    // 10. MediaOwner
+    const pOwner = state.mediaOwner || 'UNK';
+
+    // 11. IDs (Campaign/AdSet/Ad)
+    const pCampaignId = nextCampaignValues['campaignId'] || '';
+    const pAdsetId = nextAdsetValues['adsetId'] || '';
+    const pAdId = nextAdValues['adId'] || '';
+
+    // Construct the parts array
+    const cidParts = [
+        pPossibleChannel,
+        pCountry,
+        pSubChannel,
+        pProvider,
+        pName,
+        pObjective,
+        pFunnel,
+        pBudget,
+        pDate,
+        pOwner
+    ];
+
+    // Filter out empty strings if necessary, but 'UNK' handles missing. 
+    // User requested structure seems strict.
+    
+    // Sanitize parts (replace potential internal slashes with dash)
+    const sanitizedParts = cidParts.map(p => p.toString().replace(/\//g, '-'));
+
+    // Join with slash as requested
+    let campaignStr = sanitizedParts.join('/').toUpperCase();
+    
+    // Append IDs with slash
+    if (pCampaignId) campaignStr += `/${pCampaignId}`;
+    if (pAdsetId) campaignStr += `/${pAdsetId}`;
+    if (pAdId) campaignStr += `/${pAdId}`;
+    
+    // Sanitize: Space to nothing.
+    campaignStr = campaignStr.replace(/\s+/g, '');
+
+    // ---------------------------------------------------
+
+    const adsetStr = resolveStructure(state.structures.adset, nextAdsetValues, { parentCampaign: campaignStr }).toUpperCase().replace(/\//g, '_');;
     const adStr = resolveStructure(state.structures.ad, nextAdValues, { 
       parentCampaignName: toPascalCase(nextCampaignValues.campaignName || ''), 
       parentProvider: toPascalCase(nextCampaignValues.provider || '') 
-    }).toUpperCase();
+    }).toUpperCase().replace(/\//g, '_');;
 
     set({
       campaignValues: nextCampaignValues,
@@ -288,26 +408,48 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     await TaxonomyService.addClient(newClient);
   },
 
+  updateClient: async (id: string, name: string) => {
+    set((state) => ({ clients: state.clients.map(c => c.id === id ? { ...c, name } : c) }));
+    await TaxonomyService.updateClient(id, name);
+  },
+
+  deleteClient: async (id: string) => {
+    set((state) => ({ 
+        clients: state.clients.filter(c => c.id !== id),
+        selectedClientId: state.selectedClientId === id ? null : state.selectedClientId
+    }));
+    await TaxonomyService.deleteClient(id);
+  },
+
   saveTaxonomy: async () => {
-    const state = get();
-    if (!state.selectedTenantId || !state.selectedClientId) {
-      alert("Selection required.");
-      return;
+    const { 
+        selectedClientId, 
+        selectedTenantId, 
+        campaignValues,
+        adsetValues,
+        adValues,
+        generatedStrings 
+    } = get();
+
+    if (!selectedClientId || !selectedTenantId) {
+        alert("Cannot save: No Client/Tenant context.");
+        return;
     }
-    
-    const campaignName = state.campaignValues.campaignName || 'Unnamed_Campaign';
+
     const newRecord: SavedTaxonomy = {
-      id: generateUUID(),
-      tenantId: state.selectedTenantId,
-      clientId: state.selectedClientId,
-      campaignName: campaignName,
-      date: new Date().toLocaleString(),
-      strings: { ...state.generatedStrings },
+      id: crypto.randomUUID(),
+      clientId: selectedClientId,
+      tenantId: selectedTenantId,
+      campaignName: campaignValues['campaignName'] || 'Untitled',
+      date: new Date().toLocaleDateString(),
+      strings: { ...generatedStrings },
       values: {
-        campaign: { ...state.campaignValues },
-        adset: { ...state.adsetValues },
-        ad: { ...state.adValues }
-      }
+        campaign: { ...campaignValues },
+        adset: { ...adsetValues },
+        ad: { ...adValues }
+      },
+      cid: generatedStrings.campaign,
+      platform: campaignValues['provider'] || 'Unknown'
     };
 
     set((state) => ({ savedTaxonomies: [newRecord, ...state.savedTaxonomies] }));
@@ -363,5 +505,59 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       };
     });
     alert("Draft loaded!");
+  },
+
+  fillMockData: () => {
+      const state = get();
+      const { dictionaries } = state;
+      
+      // 1. Ensure context exists
+      if (!state.mediaOwner) get().setMediaOwner('Buentipo');
+      
+      // Auto-select first tenant/client if not selected (Mocking the flow)
+      // intended for development speed
+      if (!state.selectedTenantId && state.tenants.length > 0) {
+          get().selectTenant(state.tenants[0].id);
+      }
+      
+      setTimeout(() => {
+          const currentState = get();
+          if (!currentState.selectedClientId && currentState.clients.length > 0) {
+              get().selectClient(currentState.clients[0].id);
+          }
+          
+          // 2. Populate Fields with Random Data
+          const getRandom = (key: string) => {
+              const options = dictionaries[key];
+              if (!options || options.length === 0) return 'MockValue';
+              return options[Math.floor(Math.random() * options.length)];
+          };
+
+          // Campaign
+          get().setFieldValue('campaign', 'campaignName', 'DemoCampaign');
+          get().setFieldValue('campaign', 'country', getRandom('country'));
+          get().setFieldValue('campaign', 'budgetSource', getRandom('budgetSource'));
+          get().setFieldValue('campaign', 'objective', getRandom('objective'));
+          get().setFieldValue('campaign', 'channel', 'Social Media'); // Hardcode to ensure correlation
+          get().setFieldValue('campaign', 'funnel', getRandom('funnel'));
+          get().setFieldValue('campaign', 'provider', 'Meta'); // Default to Meta for ID check
+          
+          // CID Specifics
+          get().setFieldValue('campaign', 'subChannel', 'PRO');
+          get().setFieldValue('campaign', 'launchDate', '2025-11-15'); // YYYY-MM-DD for input
+
+          // AdSet
+          get().setFieldValue('adset', 'audienceStrategy', 'DABA');
+          get().setFieldValue('adset', 'audienceSegment', 'Broad'); // Dependency
+          get().setFieldValue('adset', 'placement', getRandom('placement'));
+
+          // Ad
+          get().setFieldValue('ad', 'creativeFormat', 'SixSec');
+          get().setFieldValue('ad', 'creativeSpecs', '16x9');
+          get().setFieldValue('ad', 'creativeConcept', getRandom('creativeConcept'));
+          get().setFieldValue('ad', 'creativeVariation', 'Main');
+
+          alert("Mock Data Filled!");
+      }, 100); // Small delay to allow state updates if tenant/client were null
   }
 }));

@@ -111,7 +111,21 @@ const SavedHistory: React.FC<SavedHistoryProps> = ({ onEdit }) => {
                         <span className="text-[9px] text-indigo-400 font-black uppercase tracking-widest">1. Campaign Name</span>
                         <button onClick={() => copyToClipboard(item.strings.campaign)} className="text-slate-500 hover:text-white transition-colors"><Copy size={12} /></button>
                       </div>
-                      <div className="text-white font-mono text-[11px] break-all leading-relaxed pr-6">{item.strings.campaign}</div>
+                      <div className="text-white font-mono text-[11px] break-all leading-relaxed pr-6 mb-2">{item.strings.campaign}</div>
+                      
+                      {/* CID Display if available */}
+                      {item.cid && (
+                          <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between">
+                              <span className="text-[9px] text-emerald-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                                  {item.platform && <span className="bg-emerald-900/30 px-1 rounded text-emerald-400">{item.platform}</span>}
+                                  CID
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <code className="text-[10px] text-emerald-400 font-mono">{item.cid}</code>
+                                <button onClick={() => copyToClipboard(item.cid!)} className="text-emerald-700 hover:text-emerald-400 transition-colors"><Copy size={10} /></button>
+                              </div>
+                          </div>
+                      )}
                     </div>
 
                     {/* Ad Set String */}

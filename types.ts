@@ -48,7 +48,10 @@ export type TaxonomyLevel = "campaign" | "adset" | "ad";
 export interface Tenant {
   id: string;
   name: string;
+  mediaOwner?: string; // 'Buentipo' | 'Hermano' | 'LoBueno'
 }
+
+export type MediaOwner = 'Buentipo' | 'Hermano' | 'LoBueno';
 
 export interface Client {
   id: string;
@@ -74,6 +77,8 @@ export interface SavedTaxonomy {
     adset: Record<string, string>;
     ad: Record<string, string>;
   };
+  cid?: string;
+  platform?: string;
 }
 
 export interface TaxonomyState {
@@ -82,7 +87,9 @@ export interface TaxonomyState {
   adValues: Record<string, string>;
   
   initialized: boolean;
+  mediaOwner: MediaOwner | null;
   fetchInitialData: () => Promise<void>;
+  setMediaOwner: (owner: MediaOwner | null) => void;
 
   tenants: Tenant[];
   selectedTenantId: string | null;
@@ -121,11 +128,12 @@ export interface TaxonomyState {
   // Save/Load Logic
   saveTaxonomy: () => void;
   loadSavedTaxonomy: (record: SavedTaxonomy) => void;
-  deleteSavedTaxonomy: (id: string) => void;
+  deleteSavedTaxonomy: (id: string) => Promise<void>;
 
   // Draft Logic
   saveDraftTaxonomy: () => void;
   loadDraftTaxonomy: () => void;
+  fillMockData: () => void;
   hasDraft: boolean;
 
   generatedStrings: {

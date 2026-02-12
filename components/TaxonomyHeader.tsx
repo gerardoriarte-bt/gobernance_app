@@ -12,7 +12,7 @@ interface TaxonomyHeaderProps {
 
 const TaxonomyHeader: React.FC<TaxonomyHeaderProps> = ({ activeView, setActiveView, canModifyConfig }) => {
   const { user, logout } = useAuthStore();
-  const { selectedTenantId, selectedClientId, tenants, clients } = useTaxonomyStore();
+  const { selectedTenantId, selectedClientId, tenants, clients, mediaOwner, setMediaOwner } = useTaxonomyStore();
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
   const selectedTenant = tenants.find(t => t.id === selectedTenantId);
@@ -25,22 +25,33 @@ const TaxonomyHeader: React.FC<TaxonomyHeaderProps> = ({ activeView, setActiveVi
           <Settings className="text-indigo-600" />
           Governance Builder
         </h1>
+        
+        {/* Media Owner Selector */}
+        {/* Media Owner Selector (Quick Switch) */}
+        <div className="mt-4 flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase text-indigo-400 tracking-widest bg-indigo-50/50 px-1.5 py-0.5 rounded">Media Owner:</span>
+            <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-800">
+                {(['Buentipo', 'Hermano', 'LoBueno'] as const).map((owner) => (
+                    <button
+                        key={owner}
+                        onClick={() => setMediaOwner(owner)}
+                        className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${
+                            mediaOwner === owner 
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' 
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                        }`}
+                    >
+                        {owner}
+                    </button>
+                ))}
+            </div>
+        </div>
+
         <div className="flex items-center gap-2 group relative mt-1">
           <p className="text-slate-500 flex items-center gap-1.5 text-sm">
             <Info size={14} className="text-slate-400" />
             Professional Governance & Media Naming Tool.
           </p>
-          <HelpCircle size={14} className="text-slate-300 cursor-help hover:text-indigo-500 transition-colors" />
-          
-          <div className="absolute left-0 top-full mt-2 w-80 p-5 bg-slate-900 text-white rounded-[2rem] shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-slate-800">
-             <h4 className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-2">How it works</h4>
-             <ul className="space-y-3 text-[10px] font-medium leading-relaxed text-slate-300">
-                <li className="flex gap-2"><span className="text-indigo-400 font-black">01.</span> Setup your Organization and Client workspace in the config tab.</li>
-                <li className="flex gap-2"><span className="text-indigo-400 font-black">02.</span> Use the Builder to select naming parameters. Dependencies are handled automatically.</li>
-                <li className="flex gap-2"><span className="text-indigo-400 font-black">03.</span> Finalize your convention to save it to the client's repository.</li>
-             </ul>
-             <div className="absolute -top-1 left-40 w-2 h-2 bg-slate-900 rotate-45"></div>
-          </div>
         </div>
       </div>
       
@@ -82,6 +93,13 @@ const TaxonomyHeader: React.FC<TaxonomyHeaderProps> = ({ activeView, setActiveVi
                <CheckCircle size={10} /> Active: {selectedTenant?.name} / {selectedClient?.name}
              </div>
            )}
+             {/* Debug/Mock Button */}
+             <button 
+                onClick={() => useTaxonomyStore.getState().fillMockData()}
+                className="mt-2 text-[9px] font-mono text-slate-300 hover:text-indigo-400 uppercase cursor-pointer"
+             >
+                [Fill Demo Data]
+             </button>
         </div>
       </div>
     </header>

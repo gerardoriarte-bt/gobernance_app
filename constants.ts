@@ -1,6 +1,10 @@
 
 import { MasterSchema } from './types';
 
+export const MEDIA_OWNERS = ['Buentipo', 'Hermano', 'LoBueno'] as const;
+
+export const SUB_CHANNEL_OPTIONS = ['PRO', 'RTG', 'DYN'] as const;
+
 export const MASTER_SCHEMA: MasterSchema = {
   "config": { "separator": "/", "case": "PascalCase" },
   "dictionaries": {

@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
-import { ChevronDown, Info, Lock, AlertCircle, CheckCircle, Flame, Clipboard, HelpCircle } from 'lucide-react';
-import { MASTER_SCHEMA } from '../constants';
+import { ChevronDown, Info, Lock, AlertCircle, CheckCircle, Flame, Clipboard, HelpCircle, Calendar } from 'lucide-react';
+import { MASTER_SCHEMA, SUB_CHANNEL_OPTIONS } from '../constants';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
 import { TaxonomyLevel } from '../types';
 
@@ -141,6 +141,10 @@ const TaxonomyColumn: React.FC<TaxonomyColumnProps> = ({ level, title, descripti
               </div>
               
               <div className="relative">
+                {/* Custom Field Rendering */}
+                {/* Custom Field Rendering */}
+                
+                {/* 1. Creative Variation (Free Text + Datalist) */}
                 {field === 'creativeVariation' ? (
                   <div className="relative">
                     <input

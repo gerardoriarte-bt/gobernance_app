@@ -150,7 +150,9 @@ router.get('/taxonomies', async (req, res) => {
       campaignName: row.campaign_name,
       date: row.date_string, // we stored the string repr
       strings: row.generated_strings,
-      values: row.values_data
+      values: row.values_data,
+      cid: row.cid,
+      platform: row.platform
     }));
     
     res.json(mapped);
@@ -164,8 +166,8 @@ router.post('/taxonomies', async (req, res) => {
   try {
     await pool.query(
       `INSERT INTO taxonomies 
-      (id, tenant_id, client_id, campaign_name, date_string, generated_strings, values_data) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      (id, tenant_id, client_id, campaign_name, date_string, generated_strings, values_data, cid, platform) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         item.id,
         item.tenantId,
@@ -173,7 +175,9 @@ router.post('/taxonomies', async (req, res) => {
         item.campaignName,
         item.date,
         JSON.stringify(item.strings),
-        JSON.stringify(item.values)
+        JSON.stringify(item.values),
+        item.cid,
+        item.platform
       ]
     );
     res.status(201).json({ success: true });

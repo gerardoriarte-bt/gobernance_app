@@ -37,7 +37,7 @@ export const initDB = async () => {
     await client.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS dictionaries JSONB;`);
     await client.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS structures JSONB;`);
 
-    // Taxonomies Table (Stores JSONB for flexible values)
+    // Taxonomies Table
     await client.query(`
       CREATE TABLE IF NOT EXISTS taxonomies (
         id VARCHAR(50) PRIMARY KEY,
@@ -47,9 +47,15 @@ export const initDB = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         date_string VARCHAR(100),
         generated_strings JSONB, 
-        values_data JSONB
+        values_data JSONB,
+        cid VARCHAR(255),
+        platform VARCHAR(100)
       );
     `);
+
+    // Migration: Add columns to taxonomies if they don't exist
+    await client.query(`ALTER TABLE taxonomies ADD COLUMN IF NOT EXISTS cid VARCHAR(255);`);
+    await client.query(`ALTER TABLE taxonomies ADD COLUMN IF NOT EXISTS platform VARCHAR(100);`);
     
     // Users Table
     await client.query(`

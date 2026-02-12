@@ -65,7 +65,7 @@ const ConfigView: React.FC<ConfigViewProps> = ({ setActiveView, canSave }) => {
       </div>
 
       <section>
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-4">
            <div className="flex items-center gap-4">
               <div className="p-3 bg-slate-900 rounded-2xl text-white shadow-lg shadow-slate-100 relative group">
                  <Building2 size={24} />

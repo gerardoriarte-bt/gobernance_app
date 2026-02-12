@@ -2,6 +2,7 @@
 import React from 'react';
 import { Building2, User, Settings, FileText, Download, ShieldAlert, Lock, Save, CheckCircle } from 'lucide-react';
 import TaxonomyColumn from './TaxonomyColumn';
+import CIDColumn from './CIDColumn';
 import SavedHistory from './SavedHistory';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -19,7 +20,8 @@ const BuilderView: React.FC<BuilderViewProps> = ({ setActiveView }) => {
     selectedClientId, 
     selectedTenantId, 
     clients, 
-    tenants 
+    tenants,
+    generatedStrings
   } = useTaxonomyStore();
 
   const { user } = useAuthStore();
@@ -82,7 +84,7 @@ const BuilderView: React.FC<BuilderViewProps> = ({ setActiveView }) => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch h-[600px]">
           <TaxonomyColumn 
             level="campaign" 
             title="1. Campaign" 
@@ -98,6 +100,25 @@ const BuilderView: React.FC<BuilderViewProps> = ({ setActiveView }) => {
             title="3. Ad Creative" 
             description="Formats & Variations."
           />
+          <CIDColumn />
+        </div>
+
+        {/* CID Display & Copy Action */}
+        <div className="bg-slate-900 rounded-[2rem] p-8 relative overflow-hidden text-center border-4 border-indigo-500 shadow-2xl">
+            <div className="absolute top-0 right-0 p-4 opacity-10"><FileText size={120} /></div>
+            <h3 className="text-indigo-400 text-xs font-black uppercase tracking-widest mb-4">Final Campaign ID (CID)</h3>
+            <div className="font-mono text-2xl md:text-3xl font-bold text-white break-all mb-6 relative z-10">
+                {generatedStrings.campaign || "--- Complete Campaign Params to Generate CID ---"}
+            </div>
+            <button
+                onClick={() => {
+                    navigator.clipboard.writeText(generatedStrings.campaign);
+                    alert("CID Copied!");
+                }}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider transition-all shadow-lg shadow-indigo-500/50"
+            >
+                Copy CID
+            </button>
         </div>
 
         {/* Centered Save Action */}
