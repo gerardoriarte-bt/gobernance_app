@@ -7,17 +7,22 @@ const router = Router();
 router.get('/tenants', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM tenants ORDER BY created_at DESC');
-    res.json(result.rows);
+    const mapped = result.rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      mediaOwner: r.media_owner
+    }));
+    res.json(mapped);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
 });
 
 router.post('/tenants', async (req, res) => {
-  const { id, name } = req.body;
+  const { id, name, mediaOwner } = req.body;
   try {
-    await pool.query('INSERT INTO tenants (id, name) VALUES ($1, $2)', [id, name]);
-    res.status(201).json({ id, name });
+    await pool.query('INSERT INTO tenants (id, name, media_owner) VALUES ($1, $2, $3)', [id, name, mediaOwner]);
+    res.status(201).json({ id, name, mediaOwner });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
