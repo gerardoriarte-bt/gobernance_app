@@ -32,11 +32,13 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
   
   dictionaries: getStorage('dictionaries', MASTER_SCHEMA.dictionaries),
   structures: getStorage('structures', MASTER_SCHEMA.structures),
+  dependencies: getStorage('dependencies', MASTER_SCHEMA.dependencies),
   
   generatedStrings: {
     campaign: '',
     adset: '',
     ad: '',
+    cid: '',
   },
 
   hasDraft: typeof window !== 'undefined' ? !!localStorage.getItem('taxonomy_draft') : false,
@@ -106,6 +108,32 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     get().syncCurrentClientConfig(); // Sync to Cloud
   },
 
+  addDependency: (level, dep) => {
+    set((state) => {
+      const currentDeps = state.dependencies[level] || [];
+      const updatedDeps = {
+        ...state.dependencies,
+        [level]: [...currentDeps, dep]
+      };
+      setStorage('dependencies', updatedDeps);
+      return { dependencies: updatedDeps };
+    });
+    get().syncCurrentClientConfig();
+  },
+
+  removeDependency: (level, depIndex) => {
+    set((state) => {
+      const currentDeps = state.dependencies[level] || [];
+      const updatedDeps = {
+        ...state.dependencies,
+        [level]: currentDeps.filter((_, i) => i !== depIndex)
+      };
+      setStorage('dependencies', updatedDeps);
+      return { dependencies: updatedDeps };
+    });
+    get().syncCurrentClientConfig();
+  },
+
   addDictionaryItem: (field: string, value: string) => {
     set((state) => {
       const currentList = state.dictionaries[field] || [];
@@ -152,16 +180,28 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       const nextStructures = { ...state.structures, [level]: nextStructure };
       setStorage('structures', nextStructures);
       
-      const campaignStr = resolveStructure(nextStructures.campaign, state.campaignValues).toUpperCase();
-      const adsetStr = resolveStructure(nextStructures.adset, state.adsetValues, { parentCampaign: campaignStr }).toUpperCase();
+      const campaignStr = resolveStructure(nextStructures.campaign, state.campaignValues, {}, { transform: (s) => s });
+      
+      // Calculate CID
+      const pOwner = state.mediaOwner || 'UNK';
+      const pCampaignId = state.campaignValues['campaignId'] || '';
+      const pAdsetId = state.adsetValues['adsetId'] || '';
+      const pAdId = state.adValues['adId'] || '';
+      
+      let finalCid = `${campaignStr}/${pOwner}`;
+      if (pCampaignId) finalCid += `/${pCampaignId}`;
+      if (pAdsetId) finalCid += `/${pAdsetId}`;
+      if (pAdId) finalCid += `/${pAdId}`;
+
+      const adsetStr = resolveStructure(nextStructures.adset, state.adsetValues, { parentCampaign: campaignStr }, { transform: (s) => s });
       const adStr = resolveStructure(nextStructures.ad, state.adValues, { 
-        parentCampaignName: toPascalCase(state.campaignValues.campaignName || ''), 
-        parentProvider: toPascalCase(state.campaignValues.provider || '') 
-      }).toUpperCase();
+        parentCampaignName: state.campaignValues.campaignName || '', 
+        parentProvider: state.campaignValues.provider || '' 
+      }, { transform: (s) => s });
 
       return { 
         structures: nextStructures,
-        generatedStrings: { campaign: campaignStr, adset: adsetStr, ad: adStr }
+        generatedStrings: { campaign: campaignStr, adset: adsetStr, ad: adStr, cid: finalCid }
       };
     });
     get().syncCurrentClientConfig(); // Sync to Cloud
@@ -182,7 +222,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     if (level === 'adset') nextAdsetValues[field] = value;
     if (level === 'ad') nextAdValues[field] = value;
 
-    const deps = MASTER_SCHEMA.dependencies[level as keyof typeof MASTER_SCHEMA.dependencies];
+    const deps = state.dependencies[level as keyof typeof state.dependencies] || [];
     deps.forEach(dep => {
       if (dep.field === field && dep.value.includes(value)) {
         if (dep.lock && dep.to) {
@@ -250,88 +290,33 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     // User said: "Faltan estos campos en el CID: Media Owner..."
     // Let's assume we prepend it to the resolved string if it's not present.
     
-    // --- CID Governance: Custom Structure Generation ---
-    // Order: Channel/Country/SubChannel/Provider/Name/Objective/Funnel/Budget/Date/Owner/IDs
-    
-    // 1. MarketingChannel (channel)
-    const pPossibleChannel = nextCampaignValues['channel'] || 'UNK';
-    
-    // 2. Country
-    const pCountry = nextCampaignValues['country'] || 'UNK';
-    
-    // 3. SubChannel
-    const pSubChannel = nextCampaignValues['subChannel'] || 'UNK';
-    
-    // 4. Provider
-    const pProvider = nextCampaignValues['provider'] || 'UNK';
-    
-    // 5. CampaignName
-    const pName = nextCampaignValues['campaignName'] || 'UNK';
-    
-    // 6. Objective
-    const pObjective = nextCampaignValues['objective'] || 'UNK';
-    
-    // 7. Funnel
-    const pFunnel = nextCampaignValues['funnel'] || 'UNK';
-    
-    // 8. Budget
-    const pBudget = nextCampaignValues['budgetSource'] || 'UNK';
-    
-    // 9. LaunchDate (Format DDMMYYYY)
-    let pDate = nextCampaignValues['launchDate'] || 'UNK';
-    
-    // 10. MediaOwner
-    const pOwner = state.mediaOwner || 'UNK';
+    // --- CID Governance: Standard Structure Generation ---
+    // User requested to adhere strictly to dropdowns/structure, removing forced IDs/Owner.
+    const campaignStr = resolveStructure(state.structures.campaign, nextCampaignValues, {}, { transform: (s) => s });
 
-    // 11. IDs (Campaign/AdSet/Ad)
+    // --- Final CID Generation (For CID Card only) ---
+    // Appending Owner and IDs as requested for the tracking string
+    const pOwner = state.mediaOwner || 'UNK';
     const pCampaignId = nextCampaignValues['campaignId'] || '';
     const pAdsetId = nextAdsetValues['adsetId'] || '';
     const pAdId = nextAdValues['adId'] || '';
 
-    // Construct the parts array
-    const cidParts = [
-        pPossibleChannel,
-        pCountry,
-        pSubChannel,
-        pProvider,
-        pName,
-        pObjective,
-        pFunnel,
-        pBudget,
-        pDate,
-        pOwner
-    ];
+    let finalCid = `${campaignStr}/${pOwner}`;
+    if (pCampaignId) finalCid += `/${pCampaignId}`;
+    if (pAdsetId) finalCid += `/${pAdsetId}`;
+    if (pAdId) finalCid += `/${pAdId}`;
 
-    // Filter out empty strings if necessary, but 'UNK' handles missing. 
-    // User requested structure seems strict.
-    
-    // Sanitize parts (replace potential internal slashes with dash)
-    const sanitizedParts = cidParts.map(p => p.toString().replace(/\//g, '-'));
-
-    // Join with slash as requested
-    let campaignStr = sanitizedParts.join('/').toUpperCase();
-    
-    // Append IDs with slash
-    if (pCampaignId) campaignStr += `/${pCampaignId}`;
-    if (pAdsetId) campaignStr += `/${pAdsetId}`;
-    if (pAdId) campaignStr += `/${pAdId}`;
-    
-    // Sanitize: Space to nothing.
-    campaignStr = campaignStr.replace(/\s+/g, '');
-
-    // ---------------------------------------------------
-
-    const adsetStr = resolveStructure(state.structures.adset, nextAdsetValues, { parentCampaign: campaignStr }).toUpperCase().replace(/\//g, '_');;
+    const adsetStr = resolveStructure(state.structures.adset, nextAdsetValues, { parentCampaign: campaignStr }, { transform: (s) => s }).replace(/\//g, '_');;
     const adStr = resolveStructure(state.structures.ad, nextAdValues, { 
-      parentCampaignName: toPascalCase(nextCampaignValues.campaignName || ''), 
-      parentProvider: toPascalCase(nextCampaignValues.provider || '') 
-    }).toUpperCase().replace(/\//g, '_');;
+      parentCampaignName: nextCampaignValues.campaignName || '', 
+      parentProvider: nextCampaignValues.provider || '' 
+    }, { transform: (s) => s }).replace(/\//g, '_');;
 
     set({
       campaignValues: nextCampaignValues,
       adsetValues: nextAdsetValues,
       adValues: nextAdValues,
-      generatedStrings: { campaign: campaignStr, adset: adsetStr, ad: adStr }
+      generatedStrings: { campaign: campaignStr, adset: adsetStr, ad: adStr, cid: finalCid }
     });
   },
 
@@ -340,7 +325,12 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
   },
 
   addTenant: async (name: string) => {
-    const newTenant: Tenant = { id: generateUUID(), name };
+    const { mediaOwner } = get();
+    const newTenant: Tenant = { 
+      id: generateUUID(), 
+      name,
+      mediaOwner: mediaOwner || undefined 
+    };
     // Optimistic update
     set((state) => ({ tenants: [...state.tenants, newTenant] }));
     try {
@@ -489,19 +479,32 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     const draft = JSON.parse(draftStr);
     
     set((state) => {
-      const campaignStr = resolveStructure(state.structures.campaign, draft.campaignValues).toUpperCase();
-      const adsetStr = resolveStructure(state.structures.adset, draft.adsetValues, { parentCampaign: campaignStr }).toUpperCase();
+
+      const campaignStr = resolveStructure(state.structures.campaign, draft.campaignValues, {}, { transform: (s) => s });
+      
+      // Calculate CID
+      const pOwner = state.mediaOwner || 'UNK';
+      const pCampaignId = draft.campaignValues['campaignId'] || '';
+      const pAdsetId = draft.adsetValues['adsetId'] || '';
+      const pAdId = draft.adValues['adId'] || '';
+      
+      let finalCid = `${campaignStr}/${pOwner}`;
+      if (pCampaignId) finalCid += `/${pCampaignId}`;
+      if (pAdsetId) finalCid += `/${pAdsetId}`;
+      if (pAdId) finalCid += `/${pAdId}`;
+
+      const adsetStr = resolveStructure(state.structures.adset, draft.adsetValues, { parentCampaign: campaignStr }, { transform: (s) => s });
       const adStr = resolveStructure(state.structures.ad, draft.adValues, { 
-        parentCampaignName: toPascalCase(draft.campaignValues.campaignName || ''), 
-        parentProvider: toPascalCase(draft.campaignValues.provider || '') 
-      }).toUpperCase();
+        parentCampaignName: draft.campaignValues.campaignName || '', 
+        parentProvider: draft.campaignValues.provider || '' 
+      }, { transform: (s) => s });
 
       return {
         ...state,
         campaignValues: draft.campaignValues,
         adsetValues: draft.adsetValues,
         adValues: draft.adValues,
-        generatedStrings: { campaign: campaignStr, adset: adsetStr, ad: adStr }
+        generatedStrings: { campaign: campaignStr, adset: adsetStr, ad: adStr, cid: finalCid }
       };
     });
     alert("Draft loaded!");

@@ -37,9 +37,13 @@ export const sanitizeCategoryId = (name: string): string => {
 export const resolveStructure = (
   structure: string, 
   values: Record<string, string>, 
-  parents: Record<string, string> = {}
+  parents: Record<string, string> = {},
+  options?: { transform?: (val: string) => string }
 ): string => {
   let result = structure;
+  
+  // Choose transformation strategy
+  const transform = options?.transform || toPascalCase;
   
   // Handle parent tokens first
   Object.entries(parents).forEach(([tokenKey, tokenValue]) => {
@@ -49,7 +53,8 @@ export const resolveStructure = (
   // Handle level-specific tokens with sanitization
   Object.entries(values).forEach(([key, val]) => {
     if (result.includes(`{${key}}`)) {
-      result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), toPascalCase(val) || `[${key}]`);
+      // Apply transform to the value
+      result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), transform(val) || `[${key}]`);
     }
   });
   

@@ -4,10 +4,21 @@ import { Building2, Plus, Trash2, CheckCircle2, Edit2, Save, X } from 'lucide-re
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
 
 const TenantManager: React.FC = () => {
-  const { tenants, addTenant, updateTenant, deleteTenant, selectTenant, selectedTenantId } = useTaxonomyStore();
+  const { tenants, addTenant, updateTenant, deleteTenant, selectTenant, selectedTenantId, mediaOwner } = useTaxonomyStore();
   const [newTenantName, setNewTenantName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+
+  // Filter tenants by current Media Owner context
+  // If no mediaOwner is selected (shouldn't happen in app view), show all? Or none?
+  // User request: "solo muestre los tenant generados para ese media owner"
+  const filteredTenants = tenants.filter(t => 
+      t.mediaOwner === mediaOwner || (!t.mediaOwner && !mediaOwner) 
+      // Option: Include legacy tenants (undefined owner) for all? 
+      // For now, strict filtering creates better data separation. 
+      // If a tenant has no owner, it might be hidden unless we fallback.
+      // Let's stick to matching owner.
+  );
 
   const handleAddTenant = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,13 +50,13 @@ const TenantManager: React.FC = () => {
           <Building2 className="text-indigo-600" size={18} />
           <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight">Organizations</h2>
         </div>
-        <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-500">{tenants.length} Total</span>
+        <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-500">{filteredTenants.length} Total</span>
       </div>
 
       <form onSubmit={handleAddTenant} className="flex gap-2 mb-6">
         <input
           type="text"
-          placeholder="New Organization..."
+          placeholder={`New ${mediaOwner || ''} Organization...`}
           className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
           value={newTenantName}
           onChange={(e) => setNewTenantName(e.target.value)}
@@ -59,13 +70,13 @@ const TenantManager: React.FC = () => {
       </form>
 
       <div className="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar max-h-[400px]">
-        {tenants.length === 0 && (
+        {filteredTenants.length === 0 && (
           <div className="text-center py-10 text-slate-300">
              <Building2 size={32} className="mx-auto opacity-20 mb-2" />
-             <p className="text-xs">No organizations yet.</p>
+             <p className="text-xs">No organizations for {mediaOwner}.</p>
           </div>
         )}
-        {tenants.map((tenant) => (
+        {filteredTenants.map((tenant) => (
           <div
             key={tenant.id}
             onClick={() => !editingId && selectTenant(tenant.id)}

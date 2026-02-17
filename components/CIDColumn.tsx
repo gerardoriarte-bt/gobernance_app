@@ -198,7 +198,7 @@ const CIDColumn: React.FC = () => {
                 {validation.isValid && (
                     <button 
                         onClick={() => {
-                            navigator.clipboard.writeText(generatedStrings.campaign);
+                            navigator.clipboard.writeText(generatedStrings.cid);
                             alert('CID Copied!');
                         }}
                         className="text-white hover:text-indigo-400 transition-colors"
@@ -208,7 +208,7 @@ const CIDColumn: React.FC = () => {
                 )}
              </div>
              <p className="font-mono text-[10px] text-white leading-relaxed break-all">
-                {generatedStrings.campaign || '--- Pending ---'}
+                {generatedStrings.cid || '--- Pending ---'}
              </p>
         </div>
       </div>

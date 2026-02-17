@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Building2, User, Settings, FileText, Download, ShieldAlert, Lock, Save, CheckCircle } from 'lucide-react';
 import TaxonomyColumn from './TaxonomyColumn';
 import CIDColumn from './CIDColumn';
 import SavedHistory from './SavedHistory';
+import { DependencyManager } from './DependencyManager';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -31,6 +32,8 @@ const BuilderView: React.FC<BuilderViewProps> = ({ setActiveView }) => {
   const selectedClient = clients.find(c => c.id === selectedClientId);
   const selectedTenant = tenants.find(t => t.id === selectedTenantId);
 
+  const [showRules, setShowRules] = useState(false);
+
   return (
     <>
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -56,13 +59,23 @@ const BuilderView: React.FC<BuilderViewProps> = ({ setActiveView }) => {
           <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none translate-y-1/3 translate-x-1/4">
              <Settings size={240} className="animate-spin-slow" />
           </div>
-          <button 
-             onClick={() => setActiveView('config')}
-             className="mt-6 md:mt-0 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/20 transition-all z-10 backdrop-blur-sm"
-          >
-             Switch Workspace
-          </button>
+          <div className="flex flex-col gap-2 z-10 mt-6 md:mt-0">
+            <button 
+                onClick={() => setActiveView('config')}
+                className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/20 transition-all backdrop-blur-sm"
+            >
+                Switch Workspace
+            </button>
+            <button 
+                onClick={() => setShowRules(!showRules)}
+                className="bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-200 px-6 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-indigo-500/30 transition-all backdrop-blur-sm"
+            >
+                {showRules ? 'Hide Rules' : 'Manage Rules'}
+            </button>
+          </div>
         </div>
+        
+        {showRules && <DependencyManager onClose={() => setShowRules(false)} />}
 
         {hasDraft && (
           <div className="bg-amber-50 border-2 border-amber-200 rounded-3xl p-6 flex items-center justify-between shadow-xl shadow-amber-50/50 animate-in slide-in-from-top-4">
@@ -108,11 +121,11 @@ const BuilderView: React.FC<BuilderViewProps> = ({ setActiveView }) => {
             <div className="absolute top-0 right-0 p-4 opacity-10"><FileText size={120} /></div>
             <h3 className="text-indigo-400 text-xs font-black uppercase tracking-widest mb-4">Final Campaign ID (CID)</h3>
             <div className="font-mono text-2xl md:text-3xl font-bold text-white break-all mb-6 relative z-10">
-                {generatedStrings.campaign || "--- Complete Campaign Params to Generate CID ---"}
+                {generatedStrings.cid || "--- Complete Campaign Params to Generate CID ---"}
             </div>
             <button
                 onClick={() => {
-                    navigator.clipboard.writeText(generatedStrings.campaign);
+                    navigator.clipboard.writeText(generatedStrings.cid);
                     alert("CID Copied!");
                 }}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider transition-all shadow-lg shadow-indigo-500/50"
@@ -122,42 +135,56 @@ const BuilderView: React.FC<BuilderViewProps> = ({ setActiveView }) => {
         </div>
 
         {/* Centered Save Action */}
-        <div className="flex flex-col items-center justify-center py-12 bg-white border border-slate-200 rounded-[3rem] shadow-xl relative overflow-hidden group/save">
-          <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-indigo-500 via-emerald-500 to-indigo-500"></div>
-          <div className="text-center mb-10">
-             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 relative">
-                <ShieldAlert className="text-slate-300" size={32} />
-                <div className="absolute top-0 right-full mr-4 w-48 p-3 bg-slate-800 text-white text-[9px] font-black uppercase tracking-widest rounded-xl opacity-0 invisible group-hover/save:opacity-100 group-hover/save:visible transition-all z-20">
-                  Naming standards are strictly enforced here
-                  <div className="absolute top-4 -right-1 w-2 h-2 bg-slate-800 rotate-45"></div>
-                </div>
-             </div>
-            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Governance Check-out</h3>
-            <p className="text-sm text-slate-500 max-w-sm mx-auto mt-2 font-medium">
-              Please review all naming strings above. Once saved, they will be indexed in the client's naming repository.
-            </p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-6">
-            <button
-              onClick={saveDraftTaxonomy}
-              disabled={!canSaveTaxonomy}
-              className={`group flex items-center gap-3 px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all border-2 active:scale-95 ${!canSaveTaxonomy ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200'}`}
-            >
-              <FileText size={18} className={!canSaveTaxonomy ? 'text-slate-300' : 'text-slate-400 group-hover:text-slate-600'} />
-              {isTrafficker ? 'Drafts Locked' : 'Save as Draft'}
-            </button>
-            
-            <button
-              onClick={saveTaxonomy}
-              disabled={!canSaveTaxonomy}
-              className={`group flex items-center gap-3 px-14 py-5 rounded-[2rem] font-black text-lg uppercase tracking-tight shadow-2xl transition-all transform ${!canSaveTaxonomy ? 'bg-slate-100 text-slate-300 w-full md:w-auto cursor-not-allowed shadow-none' : 'bg-emerald-600 text-white hover:bg-slate-900 shadow-emerald-100 hover:-translate-y-1 active:translate-y-0'}`}
-            >
-              {!canSaveTaxonomy ? <Lock size={24} /> : <Save size={24} className="group-hover:rotate-12 transition-transform" />}
-              {isTrafficker ? 'Read Only Mode' : 'Finalize Convention'}
-              {!isTrafficker && <CheckCircle size={20} className="ml-2 opacity-30" />}
-            </button>
+        {/* Governance Check-Out / Save Section */}
+        <div className="mt-12 bg-slate-900 border-2 border-indigo-500/50 rounded-[2.5rem] p-10 text-center relative overflow-hidden shadow-2xl shadow-indigo-900/40">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl"></div>
 
+          <div className="relative z-10 flex flex-col items-center max-w-2xl mx-auto">
+             <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-6 rotate-3">
+                <Save size={32} className="text-white" />
+             </div>
+             
+             <h2 className="text-3xl font-black text-white mb-3 tracking-tight">
+                Ready to Commit?
+             </h2>
+             <p className="text-indigo-200 text-sm font-medium mb-10 leading-relaxed">
+               Review your generated naming conventions above. Clicking below will <span className="text-white font-bold decoration-indigo-500 underline underline-offset-4">permanently index</span> them into the <span className="font-bold text-white">Client's Naming Repository</span> for governance tracking.
+             </p>
+
+             <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+                <button 
+                  onClick={saveDraftTaxonomy}
+                  disabled={!canSaveTaxonomy}
+                  className={`px-8 py-4 rounded-xl border border-slate-700 font-bold uppercase tracking-widest text-xs transition-all w-full sm:w-auto ${!canSaveTaxonomy ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                >
+                    {isTrafficker ? 'Drafts Locked' : 'Save as Draft'}
+                </button>
+                
+                <button 
+                  onClick={saveTaxonomy}
+                  disabled={!canSaveTaxonomy}
+                  className={`group relative px-10 py-4 rounded-xl font-black uppercase tracking-widest text-sm shadow-xl transition-all w-full sm:w-auto overflow-hidden ${!canSaveTaxonomy ? 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none' : 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-900/20 hover:scale-105 active:scale-95'}`}
+                >
+                    {!canSaveTaxonomy ? (
+                        <span className="flex items-center justify-center gap-3"><Lock size={18} /> Read Only Mode</span>
+                    ) : (
+                        <>
+                            <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-500 skew-x-12"></div>
+                            <span className="flex items-center justify-center gap-3">
+                               <CheckCircle size={20} className="fill-white/20" />
+                               Commit to Repository
+                            </span>
+                        </>
+                    )}
+                </button>
+             </div>
+             
+             <div className="mt-8 flex items-center gap-2 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                <ShieldAlert size={12} className="text-indigo-500" />
+                Governed Action • Irreversible update to history
+             </div>
           </div>
         </div>
       </div>

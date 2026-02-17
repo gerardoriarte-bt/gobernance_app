@@ -4,7 +4,7 @@ import { Check, ArrowRight, ShieldAlert, Sparkles, Building2 } from 'lucide-reac
 import TenantManager from './TenantManager';
 import ClientManager from './ClientManager';
 import DictionaryManager from './DictionaryManager';
-import UserManager from './UserManager';
+
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { Database } from 'lucide-react';
@@ -130,14 +130,7 @@ const ConfigView: React.FC<ConfigViewProps> = ({ setActiveView, canSave }) => {
         <DictionaryManager />
       </section>
 
-      {isAdmin && (
-        <>
-          <hr className="border-slate-100" />
-          <section>
-            <UserManager />
-          </section>
-        </>
-      )}
+
     </div>
   );
 };

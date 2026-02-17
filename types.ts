@@ -99,6 +99,15 @@ export interface TaxonomyState {
 
   dictionaries: Dictionaries;
   structures: Structures;
+  dependencies: {
+    campaign: Dependency[];
+    adset: Dependency[];
+    ad: Dependency[];
+  };
+
+  // Dependency Actions
+  addDependency: (level: TaxonomyLevel, dep: Dependency) => void;
+  removeDependency: (level: TaxonomyLevel, depIndex: number) => void;
 
   // Dictionary Actions
   addDictionaryCategory: (name: string) => void;
@@ -136,9 +145,12 @@ export interface TaxonomyState {
   fillMockData: () => void;
   hasDraft: boolean;
 
+  syncCurrentClientConfig: () => Promise<void>;
+
   generatedStrings: {
     campaign: string;
     adset: string;
     ad: string;
+    cid: string;
   };
 }
