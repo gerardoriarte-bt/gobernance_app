@@ -18,6 +18,9 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({ onClose })
         lock: '',
         to: '',
     });
+    
+    // UI State for Target Scope (includes 'cid' as a virtual level)
+    const [targetScope, setTargetScope] = useState<string>('campaign');
 
     const handleAdd = () => {
         if (!newDep.field || newDep.value?.length === 0 || !newDep.lock || !newDep.to) {
@@ -25,11 +28,22 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({ onClose })
             return;
         }
 
-        addDependency(activeLevel, newDep as Dependency);
-        setNewDep({ field: '', value: [], lock: '', to: '' });
+        // Resolve virtual 'cid' scope to actual taxonomy levels
+        let finalLevel: TaxonomyLevel = targetScope as TaxonomyLevel;
+        if (targetScope === 'cid') {
+            if (newDep.lock === 'adsetId') finalLevel = 'adset';
+            else if (newDep.lock === 'adId') finalLevel = 'ad';
+            else finalLevel = 'campaign'; // subChannel, launchDate, mediaOwner, campaignId
+        }
+
+        addDependency(activeLevel, { ...newDep, setInLevel: finalLevel } as Dependency);
+        setNewDep({ field: '', value: [], lock: '', to: '', setInLevel: undefined });
+        setTargetScope(activeLevel); // Reset scope
     };
 
-    const dictionaryKeys = Object.keys(dictionaries);
+    // Taxonomy & CID Fields
+    const cidFields = ['mediaOwner', 'subChannel', 'launchDate', 'campaignId', 'adsetId', 'adId'];
+    const standardFields = Object.keys(dictionaries).filter(k => !cidFields.includes(k));
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -107,10 +121,15 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({ onClose })
                                     onChange={(e) => setNewDep({...newDep, field: e.target.value, value: []})}
                                 >
                                     <option value="">Select Controlling Field</option>
-                                    {dictionaryKeys.map(k => <option key={k} value={k}>{k}</option>)}
+                                    <optgroup label="Standard Fields">
+                                        {standardFields.map(k => <option key={k} value={k}>{k}</option>)}
+                                    </optgroup>
+                                    <optgroup label="CID Control Fields">
+                                        {cidFields.map(k => <option key={k} value={k}>{k}</option>)}
+                                    </optgroup>
                                 </select>
 
-                                {newDep.field && dictionaries[newDep.field] && (
+                                {newDep.field && (
                                     <div className="bg-slate-900 p-3 rounded-lg border border-slate-700">
                                         <p className="text-[10px] text-slate-400 mb-2 uppercase font-bold">Matches Any Value:</p>
                                         <div className="flex flex-wrap gap-2 mb-2">
@@ -122,19 +141,53 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({ onClose })
                                                 </span>
                                             ))}
                                         </div>
-                                        <select 
-                                            className="w-full bg-slate-800 border-none rounded p-2 text-xs text-white"
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                if(val && !newDep.value?.includes(val)) {
-                                                    setNewDep({ ...newDep, value: [...(newDep.value || []), val] });
+                                        
+                                        {(dictionaries[newDep.field] || newDep.field === 'mediaOwner') ? (
+                                            <select 
+                                                className="w-full bg-slate-800 border-none rounded p-2 text-xs text-white"
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    if(val && !newDep.value?.includes(val)) {
+                                                        setNewDep({ ...newDep, value: [...(newDep.value || []), val] });
+                                                    }
+                                                }}
+                                                value=""
+                                            >
+                                                <option value="">+ Add Value to Condition</option>
+                                                {newDep.field === 'mediaOwner' 
+                                                    ? ['Buentipo', 'Hermano', 'Publicis', 'Havas', 'IPG', 'Dentsu', 'Omnicom', 'WPP'].map(opt => <option key={opt} value={opt}>{opt}</option>)
+                                                    : dictionaries[newDep.field]?.map(opt => <option key={opt} value={opt}>{opt}</option>)
                                                 }
-                                            }}
-                                            value=""
-                                        >
-                                            <option value="">+ Add Value to Condition</option>
-                                            {dictionaries[newDep.field].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                        </select>
+                                            </select>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Type Exact Value..." 
+                                                    className="flex-1 bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white"
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            const val = e.currentTarget.value.trim();
+                                                            if(val && !newDep.value?.includes(val)) {
+                                                                setNewDep({ ...newDep, value: [...(newDep.value || []), val] });
+                                                                e.currentTarget.value = '';
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                                <button 
+                                                    className="text-xs bg-slate-700 px-2 rounded text-white"
+                                                    onClick={(e) => {
+                                                        const inputElement = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                                        const val = inputElement.value.trim();
+                                                        if(val && !newDep.value?.includes(val)) {
+                                                            setNewDep({ ...newDep, value: [...(newDep.value || []), val] });
+                                                            inputElement.value = '';
+                                                        }
+                                                    }}
+                                                >+</button>
+                                            </div>
+                                        )}
                                    </div>
                                 )}
                             </div>
@@ -142,24 +195,66 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({ onClose })
                             {/* THEN Block */}
                             <div className="space-y-3">
                                 <label className="text-xs text-emerald-400 font-bold block uppercase">Consequence (THEN SET)</label>
-                                <select 
-                                    className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
-                                    value={newDep.lock}
-                                    onChange={(e) => setNewDep({...newDep, lock: e.target.value, to: ''})}
-                                >
-                                    <option value="">Select Target Field</option>
-                                    {dictionaryKeys.filter(k => k !== newDep.field).map(k => <option key={k} value={k}>{k}</option>)}
-                                </select>
+                                
+                                <div className="flex gap-2">
+                                    <div className="w-1/3">
+                                        <label className="text-[9px] text-slate-500 font-black uppercase mb-1 block">In Level</label>
+                                        <select 
+                                            className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                                            value={targetScope}
+                                            onChange={(e) => setTargetScope(e.target.value)}
+                                        >
+                                            <option value="campaign">Campaign</option>
+                                            <option value="adset">Ad Set</option>
+                                            <option value="ad">Ad</option>
+                                            <option value="cid">CID Control</option>
+                                        </select>
+                                    </div>
+                                    <div className="w-2/3">
+                                        <label className="text-[9px] text-slate-500 font-black uppercase mb-1 block">Target Field</label>
+                                        <select 
+                                            className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                                            value={newDep.lock}
+                                            onChange={(e) => setNewDep({...newDep, lock: e.target.value, to: ''})}
+                                        >
+                                            <option value="">Select Field</option>
+                                            {targetScope === 'cid' ? (
+                                                cidFields.filter(k => k !== newDep.field).map(k => <option key={k} value={k}>{k}</option>)
+                                            ) : (
+                                                standardFields.filter(k => k !== newDep.field).map(k => <option key={k} value={k}>{k}</option>)
+                                            )}
+                                        </select>
+                                    </div>
+                                </div>
 
-                                {newDep.lock && dictionaries[newDep.lock] && (
-                                     <select 
-                                        className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
-                                        value={newDep.to}
-                                        onChange={(e) => setNewDep({...newDep, to: e.target.value})}
-                                     >
-                                        <option value="">Select Value to Force</option>
-                                        {dictionaries[newDep.lock].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                     </select>
+                                {newDep.lock && (
+                                     (dictionaries[newDep.lock] || newDep.lock === 'mediaOwner') ? (
+                                         <select 
+                                            className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                                            value={newDep.to}
+                                            onChange={(e) => setNewDep({...newDep, to: e.target.value})}
+                                         >
+                                            <option value="">Select Value to Force</option>
+                                            {newDep.lock === 'mediaOwner'
+                                                ? ['Buentipo', 'Hermano', 'Publicis', 'Havas', 'IPG', 'Dentsu', 'Omnicom', 'WPP'].map(opt => <option key={opt} value={opt}>{opt}</option>)
+                                                : dictionaries[newDep.lock]?.map(opt => <option key={opt} value={opt}>{opt}</option>)
+                                            }
+                                         </select>
+                                     ) : (
+                                         <div className="space-y-1">
+                                            <label className="text-[9px] text-slate-500 font-black uppercase">Custom Value</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Type Value to Set..." 
+                                                className="w-full bg-slate-900 border border-emerald-500/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                                                value={newDep.to}
+                                                onChange={(e) => setNewDep({...newDep, to: e.target.value})}
+                                            />
+                                            <p className="text-[9px] text-slate-500">
+                                                For IDs, you can use tokens like {'{campaignid}'}, {'{{campaign.id}}'} etc. or fixed strings.
+                                            </p>
+                                         </div>
+                                     )
                                 )}
                             </div>
 

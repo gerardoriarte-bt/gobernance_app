@@ -28,6 +28,7 @@ export interface Dependency {
   value: string[];
   lock?: string;
   to?: string;
+  setInLevel?: "campaign" | "adset" | "ad";
   filter?: string;
   allow?: string[];
 }
@@ -146,6 +147,7 @@ export interface TaxonomyState {
   hasDraft: boolean;
 
   syncCurrentClientConfig: () => Promise<void>;
+  resetTaxonomyStructure: () => Promise<void>;
 
   generatedStrings: {
     campaign: string;

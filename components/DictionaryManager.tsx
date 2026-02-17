@@ -118,10 +118,25 @@ const DictionaryManager: React.FC = () => {
             </div>
             <p className="text-xs text-slate-500 font-medium">Define your naming DNA and where it propagates across your media operations.</p>
          </div>
-         <div className="flex items-center gap-2 px-4 py-2 bg-amber-100/50 rounded-2xl border border-amber-200">
-            <Settings2 size={16} className="text-amber-600" />
-            <span className="text-[11px] font-black text-amber-700 uppercase tracking-tight">Standard v2.1</span>
-         </div>
+         {canModify ? (
+            <button
+               onClick={() => {
+                   useTaxonomyStore.getState().resetTaxonomyStructure();
+               }}
+               className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 rounded-2xl border border-red-200 hover:border-red-300 transition-all group active:scale-95"
+               title="Danger: Reset to Master Structure"
+            >
+               <div className="bg-red-100 p-1 rounded-lg group-hover:bg-red-200 transition-colors">
+                   <Trash2 size={14} className="text-red-600" />
+               </div>
+               <span className="text-[10px] font-black text-red-600 uppercase tracking-widest group-hover:text-red-700">Reset Fields</span>
+            </button>
+         ) : (
+             <div className="flex items-center gap-2 px-4 py-2 bg-amber-100/50 rounded-2xl border border-amber-200 opacity-60">
+                <Settings2 size={16} className="text-amber-600" />
+                <span className="text-[11px] font-black text-amber-700 uppercase tracking-tight">Standard v2.1</span>
+             </div>
+         )}
       </div>
 
       <div className="flex flex-col lg:flex-row min-h-[700px]">
@@ -147,16 +162,19 @@ const DictionaryManager: React.FC = () => {
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
                   />
-                  <button
-                    type="submit"
-                    className="bg-slate-900 text-white p-2.5 rounded-xl hover:bg-slate-800 transition-all shadow-md active:scale-95 shrink-0"
-                  >
-                    <FolderPlus size={18} />
-                  </button>
-                </form>
-              </>
-            ) : (
-               <div className="p-2 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-3 opacity-70">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleAddCategory}
+                        className="bg-slate-900 text-white p-2.5 rounded-xl hover:bg-slate-800 transition-all shadow-md active:scale-95 shrink-0"
+                    >
+                        <FolderPlus size={18} />
+                    </button>
+
+                </div>
+              </form>
+            </>
+          ) : (
+             <div className="p-2 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-3 opacity-70">
                   <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-400">
                      <Settings2 size={16} />
                   </div>

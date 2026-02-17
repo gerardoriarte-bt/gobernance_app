@@ -56,11 +56,30 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
      }
   },
 
-  setMediaOwner: (owner) => set({ 
-    mediaOwner: owner,
-    selectedTenantId: null, // Reset selection
-    selectedClientId: null 
-  }),
+  setMediaOwner: (owner) => {
+    set({ 
+      mediaOwner: owner,
+      selectedTenantId: null, // Reset selection
+      selectedClientId: null 
+    });
+
+    // Trigger Rules based on Media Owner Change
+    const state = get();
+    (['campaign', 'adset', 'ad'] as TaxonomyLevel[]).forEach(level => {
+        const deps = state.dependencies[level] || [];
+        deps.forEach(dep => {
+            if (dep.field === 'mediaOwner' && dep.value.includes(owner)) {
+                 // Apply Consequence
+                 if (dep.lock && dep.to) {
+                     // Reuse setFieldValue logic effectively by calling it for the target field?
+                     // No, pass to setFieldValue might be recursive or confusing.
+                     // Just apply directly.
+                     get().setFieldValue(dep.setInLevel || level, dep.lock, dep.to);
+                 }
+            }
+        });
+    });
+  },
 
   // Helper to sync changes to current client
   syncCurrentClientConfig: async () => {
@@ -226,9 +245,10 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     deps.forEach(dep => {
       if (dep.field === field && dep.value.includes(value)) {
         if (dep.lock && dep.to) {
-          if (level === 'campaign') nextCampaignValues[dep.lock] = dep.to;
-          if (level === 'adset') nextAdsetValues[dep.lock] = dep.to;
-          if (level === 'ad') nextAdValues[dep.lock] = dep.to;
+          const targetLevel = dep.setInLevel || level;
+          if (targetLevel === 'campaign') nextCampaignValues[dep.lock] = dep.to;
+          if (targetLevel === 'adset') nextAdsetValues[dep.lock] = dep.to;
+          if (targetLevel === 'ad') nextAdValues[dep.lock] = dep.to;
         }
         
         if (dep.filter) {
@@ -562,5 +582,43 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
 
           alert("Mock Data Filled!");
       }, 100); // Small delay to allow state updates if tenant/client were null
+  },
+
+  resetTaxonomyStructure: async () => {
+    // 1. Double Verification
+    if (!window.confirm("⚠️ DANGER: Are you sure you want to RESET the entire taxonomy structure to the Master Default?")) {
+        return;
+    }
+    if (!window.confirm("🔴 FINAL WARNING: This will DELETE all custom fields, dependencies, and structure changes for this workspace. This action cannot be undone. \n\nAre you absolutely sure?")) {
+        return;
+    }
+
+    // 2. Clear current client config if selected
+    const { selectedClientId } = get();
+    
+    // 3. Revert State to Master Schema
+    set((state) => {
+        const resetDicts = { ...MASTER_SCHEMA.dictionaries };
+        const resetStructures = { ...MASTER_SCHEMA.structures };
+        const resetDeps = { ...MASTER_SCHEMA.dependencies };
+
+        // Save to local storage for persistence
+        setStorage('dictionaries', resetDicts);
+        setStorage('structures', resetStructures);
+        setStorage('dependencies', resetDeps);
+
+        return {
+            dictionaries: resetDicts,
+            structures: resetStructures,
+            dependencies: resetDeps
+        };
+    });
+
+    // 4. Sync to Cloud if Client Selected
+    if (selectedClientId) {
+        await get().syncCurrentClientConfig();
+    }
+    
+    alert("Taxonomy Structure has been reset to Master Default.");
   }
 }));

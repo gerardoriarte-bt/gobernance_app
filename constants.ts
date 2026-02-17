@@ -21,7 +21,8 @@ export const MASTER_SCHEMA: MasterSchema = {
     "creativeFormat": ["Video", "SingleImage", "Carousel", "Collection", "RichMedia"],
     "creativeSpecs": ["Static", "06Sec", "10Sec", "15Sec", "30Sec", "1x1", "9x16", "16x9"],
     "creativeConcept": ["Anthem", "ProductFocus", "Lifestyle", "Promo", "UGC", "Testimonial"],
-    "creativeVariation": ["Main", "Men", "Women", "CoGender", "Cutdown"]
+    "creativeVariation": ["Main", "Men", "Women", "CoGender", "Cutdown"],
+    "subChannel": ["PRO", "RTG", "DYN"]
   },
   "structures": {
     "campaign": "{country}/{budgetSource}/{campaignName}/{provider}/{objective}/{channel}/{funnel}",

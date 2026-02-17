@@ -11,7 +11,8 @@ const CIDColumn: React.FC = () => {
     adsetValues, 
     adValues, 
     setFieldValue, 
-    generatedStrings 
+    generatedStrings,
+    dictionaries
   } = useTaxonomyStore();
 
   const launchDate = campaignValues['launchDate'] || '';
@@ -106,7 +107,7 @@ const CIDColumn: React.FC = () => {
                    onChange={(e) => setFieldValue('campaign', 'subChannel', e.target.value)}
                  >
                     <option value="" disabled>Select Sub-Channel...</option>
-                    {SUB_CHANNEL_OPTIONS.map(opt => (
+                    {(dictionaries['subChannel'] || []).map(opt => (
                         <option key={opt} value={opt}>{opt}</option>
                     ))}
                  </select>
