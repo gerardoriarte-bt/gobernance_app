@@ -1,8 +1,9 @@
 
-import React, { useMemo } from 'react';
-import { Calendar, CheckCircle, AlertCircle, Lock, Edit3, Clipboard, HelpCircle, ChevronDown } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Calendar, CheckCircle, AlertCircle, Lock, Edit3, Clipboard, HelpCircle, ChevronDown, Settings2 } from 'lucide-react';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
 import { SUB_CHANNEL_OPTIONS } from '../constants';
+import { CIDStructureBuilder } from './CIDStructureBuilder';
 
 const CIDColumn: React.FC = () => {
   const { 
@@ -14,6 +15,8 @@ const CIDColumn: React.FC = () => {
     generatedStrings,
     dictionaries
   } = useTaxonomyStore();
+
+  const [showBuilder, setShowBuilder] = useState(false);
 
   const launchDate = campaignValues['launchDate'] || '';
   
@@ -39,6 +42,7 @@ const CIDColumn: React.FC = () => {
   }, [mediaOwner, launchDate, generatedStrings]);
 
   return (
+    <>
     <div className={`flex flex-col gap-6 bg-slate-50 p-6 rounded-[2.5rem] border-2 transition-all duration-500 shadow-xl h-full relative overflow-hidden ${
       validation.isValid 
         ? 'border-indigo-500 shadow-indigo-50/50' 
@@ -52,7 +56,13 @@ const CIDColumn: React.FC = () => {
         <div className="group relative">
           <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
             4. CID Control
-            <HelpCircle size={14} className="text-slate-300 cursor-help" />
+            <button 
+                onClick={() => setShowBuilder(true)}
+                className="bg-indigo-50 hover:bg-indigo-100 text-indigo-500 p-1.5 rounded-full transition-colors"
+                title="Configure CID Structure"
+            >
+                <Settings2 size={14} />
+            </button>
           </h2>
           <p className="text-xs text-slate-400 font-bold mt-1">Localization, Tracking & IDs.</p>
         </div>
@@ -127,16 +137,6 @@ const CIDColumn: React.FC = () => {
                     !launchDate ? 'border-red-50 hover:border-red-100' : 'border-slate-200 hover:border-indigo-100'
                   }`}
                   value={launchDate ? 
-                    // Convert stored DDMMYYYY to YYYY-MM-DD for input if needed, 
-                    // OR if we store it as YYYY-MM-DD in the store?
-                    // Previous logic in TaxonomyColumn converted input (YYYY-MM-DD) -> store (DDMMYYYY).
-                    // In CIDColumn we should probably do the same reversable if possible.
-                    // But simpler: just use a text input for DDMMYYYY or stick to date picker returning YYYY-MM-DD and formatting for string?
-                    // Let's stick to the store value. If store has '15112024', date input won't understand it.
-                    // We need to parse it back or just reset?
-                    // Let's assume for now we clear it if invalid, or start fresh since it's a new column.
-                    // Better: Store formatted in `campaignValues['launchDateFormatted']` and raw in `campaignValues['launchDate']`?
-                    // Or just parse:
                     (launchDate.length === 8 ? `${launchDate.slice(4)}-${launchDate.slice(2,4)}-${launchDate.slice(0,2)}` : launchDate)
                     : ''
                   }
@@ -214,6 +214,9 @@ const CIDColumn: React.FC = () => {
         </div>
       </div>
     </div>
+    
+    {showBuilder && <CIDStructureBuilder onClose={() => setShowBuilder(false)} />}
+    </>
   );
 };
 
