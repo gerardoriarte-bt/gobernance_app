@@ -323,7 +323,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
          } else if (isGoogle) {
              nextCampaignValues['campaignId'] = '{campaignid}';
              nextAdsetValues['adsetId'] = '{adgroupid}';
-             nextAdValues['adId'] = '{creative} {matchtype} {keyword}'; // Spaces as requested
+             nextAdValues['adId'] = '{creative}'; // Removed {matchtype} {keyword} as requested
          } else {
              // Random ID Fallback for other providers
              const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
