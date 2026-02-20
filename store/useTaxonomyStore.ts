@@ -312,9 +312,10 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     }
 
     // Force injection logic if provider changed
-    if (level === 'campaign' && field === 'provider') {
-         const isMeta = ['Meta', 'Facebook', 'Meta Ads', 'Instagram', 'FB'].includes(value);
-         const isGoogle = ['Google Ads', 'Google', 'YouTube', 'DV360', 'GG'].includes(value);
+    if (level === 'campaign' && ['provider', 'publisher', 'platform'].includes(field.toLowerCase())) {
+         const normalizedValue = value.trim().toLowerCase();
+         const isMeta = ['meta', 'facebook', 'meta ads', 'instagram', 'fb'].includes(normalizedValue);
+         const isGoogle = ['google ads', 'google', 'youtube', 'dv360', 'gg'].includes(normalizedValue);
 
          if (isMeta) {
              nextCampaignValues['campaignId'] = '{{campaign.id}}';
