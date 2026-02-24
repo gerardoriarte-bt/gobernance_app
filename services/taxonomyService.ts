@@ -89,11 +89,11 @@ export const TaxonomyService = {
     const res = await fetch(`${API_URL}/taxonomies/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete taxonomy');
   },
-  async updateClientConfig(id: string, dictionaries: any, structures: any): Promise<void> {
+  async updateClientConfig(id: string, dictionaries: any, structures: any, cidStructure?: string[]): Promise<void> {
     const res = await fetch(`${API_URL}/clients/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dictionaries, structures }),
+      body: JSON.stringify({ dictionaries, structures, cidStructure }),
     });
     if (!res.ok) throw new Error('Failed to update client config');
   },

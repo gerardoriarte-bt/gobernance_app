@@ -514,7 +514,12 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       campaignValues: { ...record.values.campaign },
       adsetValues: { ...record.values.adset },
       adValues: { ...record.values.ad },
-      generatedStrings: { ...record.strings }
+      generatedStrings: { 
+        campaign: record.strings.campaign,
+        adset: record.strings.adset,
+        ad: record.strings.ad,
+        cid: record.strings.cid || ''
+      }
     }));
   },
 
@@ -602,7 +607,6 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
           get().setFieldValue('campaign', 'provider', 'Meta'); // Default to Meta for ID check
           
           // CID Specifics
-          get().setFieldValue('campaign', 'subChannel', 'PRO');
           get().setFieldValue('campaign', 'launchDate', '2025-11-15'); // YYYY-MM-DD for input
 
           // AdSet

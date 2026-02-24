@@ -2,7 +2,6 @@
 import React, { useMemo, useState } from 'react';
 import { Calendar, CheckCircle, AlertCircle, Lock, Edit3, Clipboard, HelpCircle, ChevronDown, Settings2 } from 'lucide-react';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
-import { SUB_CHANNEL_OPTIONS } from '../constants';
 import { CIDStructureBuilder } from './CIDStructureBuilder';
 
 const CIDColumn: React.FC = () => {
@@ -26,8 +25,6 @@ const CIDColumn: React.FC = () => {
   // Validation state
   const validation = useMemo(() => {
     const missing = [];
-    if (!mediaOwner) missing.push('Media Owner');
-    if (!campaignValues['subChannel']) missing.push('Sub-Channel');
     if (!launchDate) missing.push('Launch Date');
     // IDs are auto-generated but we should check if they exist?
     // They depend on provider selection.
@@ -103,27 +100,6 @@ const CIDColumn: React.FC = () => {
              </div>
         </div>
 
-        {/* 2. Sub-Channel Input */}
-        <div className="space-y-2">
-             <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 flex items-center gap-1">
-                Sub-Channel <span className="text-red-300 ml-0.5">*</span>
-             </label>
-             <div className="relative">
-                <select
-                   className={`w-full bg-white border-2 rounded-2xl py-3.5 px-4 pr-10 text-xs font-bold appearance-none outline-none transition-all ${
-                      !campaignValues['subChannel'] ? 'border-red-50' : 'border-slate-200 hover:border-indigo-100'
-                   }`}
-                   value={campaignValues['subChannel'] || ''}
-                   onChange={(e) => setFieldValue('campaign', 'subChannel', e.target.value)}
-                 >
-                    <option value="" disabled>Select Sub-Channel...</option>
-                    {(dictionaries['subChannel'] || []).map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                 </select>
-                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={16} />
-             </div>
-        </div>
 
         {/* 3. Launch Date Input */}
         <div className="space-y-2">

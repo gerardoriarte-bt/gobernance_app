@@ -60,6 +60,7 @@ export interface Client {
   tenantId: string;
   dictionaries?: Dictionaries;
   structures?: Structures;
+  cidStructure?: string[];
 }
 
 export interface SavedTaxonomy {
@@ -72,6 +73,7 @@ export interface SavedTaxonomy {
     campaign: string;
     adset: string;
     ad: string;
+    cid?: string; // Support for CID strings
   };
   values: {
     campaign: Record<string, string>;
@@ -100,6 +102,8 @@ export interface TaxonomyState {
 
   dictionaries: Dictionaries;
   structures: Structures;
+  cidStructure: string[];
+  setCidStructure: (structure: string[]) => void;
   dependencies: {
     campaign: Dependency[];
     adset: Dependency[];

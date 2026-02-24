@@ -21,7 +21,8 @@ export const CIDStructureBuilder: React.FC<CIDStructureBuilderProps> = ({ onClos
       { key: 'mediaOwner', label: 'Media Owner' },
       { key: 'campaignId', label: 'Campaign ID Token' },
       { key: 'adsetId', label: 'Ad Set ID Token' },
-      { key: 'adId', label: 'Ad ID Token' }
+      { key: 'adId', label: 'Ad ID Token' },
+      { key: 'launchDate', label: 'Launch Date' }
   ];
 
   // Get other potential fields from dictionaries that are typically campaign level
