@@ -362,11 +362,11 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     });
     const finalCid = cidParts.filter(p => p && p.trim().length > 0).join('/');
 
-    const adsetStr = resolveStructure(state.structures.adset, nextAdsetValues, { parentCampaign: campaignStr }, { transform: (s) => s }).replace(/\//g, '_');;
+    const adsetStr = resolveStructure(state.structures.adset, nextAdsetValues, { parentCampaign: campaignStr }, { transform: (s) => s });
     const adStr = resolveStructure(state.structures.ad, nextAdValues, { 
       parentCampaignName: nextCampaignValues.campaignName || '', 
       parentProvider: nextCampaignValues.provider || '' 
-    }, { transform: (s) => s }).replace(/\//g, '_');;
+    }, { transform: (s) => s });
 
     set({
       campaignValues: nextCampaignValues,
