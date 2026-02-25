@@ -12,14 +12,30 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+const allowedAppDomains = ['lobueno.co', 'buentipo.com', 'hermano.com', 'localhost', '127.0.0.1'];
+const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
+const isAllowedDomain = allowedAppDomains.some(d => currentDomain === d || currentDomain.endsWith(`.${d}`));
+
+let app: any;
+let auth: any;
+let db: any;
+let googleProvider: any;
+
 import { setPersistence, browserLocalPersistence } from 'firebase/auth';
 
-// Ensure persistence is enabled immediately
-setPersistence(auth, browserLocalPersistence).catch((error) => {
-  console.error("Firebase persistence error:", error);
-});
+if (isAllowedDomain) {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
 
-export const db = getFirestore(app);
-export const googleProvider = new GoogleAuthProvider();
+  // Ensure persistence is enabled immediately
+  setPersistence(auth, browserLocalPersistence).catch((error) => {
+    console.error("Firebase persistence error:", error);
+  });
+
+  db = getFirestore(app);
+  googleProvider = new GoogleAuthProvider();
+} else {
+  console.warn(`Conexión a Firebase restringida. El dominio ${currentDomain} no está autorizado.`);
+}
+
+export { app, auth, db, googleProvider };

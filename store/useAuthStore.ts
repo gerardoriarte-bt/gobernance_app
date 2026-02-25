@@ -99,6 +99,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const result = await signInWithPopup(auth, googleProvider);
       const googleUser = result.user;
 
+      // Validate email domain
+      const allowedDomains = ['lobueno.co', 'buentipo.com', 'hermano.com'];
+      const userEmail = googleUser.email || '';
+      const emailDomain = userEmail.split('@')[1];
+
+      if (!emailDomain || !allowedDomains.includes(emailDomain)) {
+         alert(`Acceso denegado: El dominio @${emailDomain || 'desconocido'} no está autorizado. Solo lobueno.co, buentipo.com y hermano.com están permitidos.`);
+         await auth.signOut();
+         set({ isLoading: false, isAuthenticated: false, user: null });
+         return;
+      }
+
       // 1. Try to get user from Real Firestore
       try {
           const { UserService } = await import('../services/userService');
