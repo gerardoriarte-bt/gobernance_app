@@ -23,7 +23,8 @@ const DictionaryManager: React.FC = () => {
   } = useTaxonomyStore();
 
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  const isSuperAdmin = user?.role === 'superadmin';
+  const isAdmin = user?.role === 'admin' || isSuperAdmin;
   const isPlanner = user?.role === 'planner';
   const canModify = isAdmin || isPlanner;
 
@@ -349,26 +350,29 @@ const DictionaryManager: React.FC = () => {
                     </div>
                  </div>
 
-                 <form onSubmit={handleAddItem} className="flex gap-3 mb-8">
-                   <div className="relative flex-1">
-                      <input
-                        type="text"
-                        placeholder={`Type new option for ${readableLabel(selectedField)}...`}
-                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-8 focus:ring-amber-500/10 focus:border-amber-500 outline-none transition-all placeholder:text-slate-300"
-                        value={newItemValue}
-                        onChange={(e) => setNewItemValue(e.target.value)}
-                      />
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300">
-                         <ListFilter size={20} />
+                 {canModify && (
+                    <form onSubmit={handleAddItem} className="flex gap-3 mb-8">
+                      <div className="relative flex-1">
+                         <input
+                           type="text"
+                           placeholder={`Add new value to ${readableLabel(selectedField)}...`}
+                           className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-8 focus:ring-amber-500/10 focus:border-amber-500 outline-none transition-all placeholder:text-slate-300"
+                           value={newItemValue}
+                           onChange={(e) => setNewItemValue(e.target.value)}
+                         />
+                         <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300">
+                            <ListFilter size={20} />
+                         </div>
                       </div>
-                   </div>
-                   <button
-                     type="submit"
-                     className="bg-amber-600 text-white px-8 py-4 rounded-2xl text-sm font-black flex items-center gap-2 hover:bg-amber-700 transition-all shadow-xl shadow-amber-100 active:scale-95 active:shadow-none"
-                   >
-                     <Plus size={20} /> Add to Dict
-                   </button>
-                 </form>
+                      <button
+                        type="submit"
+                        disabled={!newItemValue.trim()}
+                        className="bg-amber-600 text-white px-8 py-4 rounded-2xl text-sm font-black flex items-center gap-2 hover:bg-amber-700 transition-all shadow-xl shadow-amber-100 active:scale-95 active:shadow-none disabled:opacity-50"
+                      >
+                        <Plus size={20} /> Add to Dict
+                      </button>
+                    </form>
+                 )}
 
                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto pr-1">
                    {(dictionaries[selectedField] || []).length === 0 && (
@@ -386,12 +390,14 @@ const DictionaryManager: React.FC = () => {
                        className="group flex items-center justify-between bg-white border border-slate-100 p-4 rounded-2xl shadow-sm hover:border-amber-300 hover:bg-amber-50/20 transition-all hover:-translate-y-1"
                      >
                        <span className="text-xs font-black text-slate-700 truncate mr-2">{item}</span>
-                       <button
-                         onClick={() => deleteDictionaryItem(selectedField, item)}
-                         className="text-slate-200 hover:text-red-500 transition-colors p-1 group-hover:opacity-100"
-                       >
-                         <X size={16} />
-                       </button>
+                       {canModify && (
+                        <button
+                          onClick={() => deleteDictionaryItem(selectedField, item)}
+                          className="p-1 px-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
                      </div>
                    ))}
                  </div>

@@ -95,7 +95,7 @@ const TaxonomyHeader: React.FC<TaxonomyHeaderProps> = ({ activeView, setActiveVi
                     <p className="text-[10px] text-slate-500 truncate">{user.email}</p>
                   </div>
                   <div className="p-1">
-                    {user.role === 'admin' && (
+                    {(user.role === 'admin' || user.role === 'superadmin') && (
                       <button 
                         onClick={() => {
                           setIsUserModalOpen(true);

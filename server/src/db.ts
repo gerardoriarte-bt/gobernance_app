@@ -89,11 +89,11 @@ const seedData = async (client: any) => {
   // 1. Seed Initial Users
   const initialUsers = [
     ['usr_jose_001', 'jose.rodriguez@lobueno.co', 'Jose Rodriguez', 'admin', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jose'],
-    ['usr_santiago_002', 'santiago.rodriguez@lobueno.co', 'Santiago Rodriguez Rivera', 'admin', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Santiago'],
+    ['usr_santiago_002', 'santiago.rodriguez@lobueno.co', 'Santiago Rodriguez Rivera', 'superadmin', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Santiago'],
     ['usr_gerardo_003', 'gerardo.riarte@buentipo.com', 'Gerardo Carlos Riarte', 'admin', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gerardo'],
     ['usr_christian_004', 'christian.martinez@lobueno.co', 'Christian Eduardo Martinez Moreno', 'admin', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Christian'],
     ['usr_joffre_005', 'joffre@buentipo.com', 'Joffre Carmona', 'trafficker', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Joffre'],
-    ['usr_admin_000', 'admin@governance.com', 'Super Admin', 'admin', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'],
+    ['usr_admin_006', 'admin@governance.com', 'Super Admin', 'superadmin', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'],
     ['usr_planner_007', 'planner@governance.com', 'Demo Planner', 'planner', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Planner']
   ];
 

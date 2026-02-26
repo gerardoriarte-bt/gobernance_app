@@ -22,7 +22,8 @@ const TaxonomyBuilder: React.FC = () => {
   }, [fetchInitialData]);
 
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  const isSuperAdmin = user?.role === 'superadmin';
+  const isAdmin = user?.role === 'admin' || isSuperAdmin;
   const isPlanner = user?.role === 'planner';
   const canModifyConfig = isAdmin || isPlanner; 
   const canSave = selectedTenantId && selectedClientId;

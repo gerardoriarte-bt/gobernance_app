@@ -6,6 +6,7 @@ import {
   Fingerprint
 } from 'lucide-react';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 const ClientManager: React.FC = () => {
   const { 
@@ -18,6 +19,8 @@ const ClientManager: React.FC = () => {
     selectedClientId, 
     selectedTenantId 
   } = useTaxonomyStore();
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
   
   const [newClientName, setNewClientName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -107,27 +110,29 @@ const ClientManager: React.FC = () => {
       </div>
 
       {/* Add Form */}
-      <form onSubmit={handleAddClient} className="flex gap-2 mb-8 group">
-        <div className="relative flex-1">
-           <input
-             type="text"
-             placeholder="New Client Name (e.g. Under Armour Mexico)..."
-             className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-8 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-300"
-             value={newClientName}
-             onChange={(e) => setNewClientName(e.target.value)}
-           />
-           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-500 transition-colors">
-              <Fingerprint size={20} />
-           </div>
-        </div>
-        <button
-          type="submit"
-          disabled={!newClientName.trim()}
-          className="bg-slate-900 text-white px-8 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-600 transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <UserPlus size={18} /> Add
-        </button>
-      </form>
+      {isAdmin && (
+        <form onSubmit={handleAddClient} className="flex gap-2 mb-8 group">
+          <div className="relative flex-1">
+             <input
+               type="text"
+               placeholder="New Client Name (e.g. Under Armour Mexico)..."
+               className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-8 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-300"
+               value={newClientName}
+               onChange={(e) => setNewClientName(e.target.value)}
+             />
+             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-500 transition-colors">
+                <Fingerprint size={20} />
+             </div>
+          </div>
+          <button
+            type="submit"
+            disabled={!newClientName.trim()}
+            className="bg-slate-900 text-white px-8 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-600 transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <UserPlus size={18} /> Add
+          </button>
+        </form>
+      )}
 
       {/* Clients Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-[300px]">
@@ -165,7 +170,7 @@ const ClientManager: React.FC = () => {
                   <User size={20} />
                </div>
                
-               {!editingId && (
+               {!editingId && isAdmin && (
                  <div className="flex items-center gap-1">
                     <button
                       onClick={(e) => handleStartEdit(e, client)}

@@ -1,8 +1,9 @@
 
 import React, { useMemo } from 'react';
 import { ChevronDown, Info, Lock, AlertCircle, CheckCircle, Flame, Clipboard, HelpCircle, Calendar } from 'lucide-react';
-import { MASTER_SCHEMA, SUB_CHANNEL_OPTIONS } from '../constants';
+import { MASTER_SCHEMA } from '../constants';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { TaxonomyLevel } from '../types';
 
 interface TaxonomyColumnProps {
@@ -40,6 +41,10 @@ const TaxonomyColumn: React.FC<TaxonomyColumnProps> = ({ level, title, descripti
   };
 
   const isLocked = (fieldName: string) => {
+    // Super Admins are never locked out of editing
+    const { user } = useAuthStore.getState();
+    if (user?.role === 'superadmin') return false;
+
     const deps = MASTER_SCHEMA.dependencies[level as keyof typeof MASTER_SCHEMA.dependencies] || [];
     return deps.some(dep => {
       const triggerValue = currentValues[dep.field];

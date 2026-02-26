@@ -26,8 +26,10 @@ const BuilderView: React.FC<BuilderViewProps> = ({ setActiveView }) => {
   } = useTaxonomyStore();
 
   const { user } = useAuthStore();
+  const isSuperAdmin = user?.role === 'superadmin';
+  const isAdmin = user?.role === 'admin';
   const isTrafficker = user?.role === 'trafficker';
-  const canSaveTaxonomy = !isTrafficker;
+  const canSaveTaxonomy = isSuperAdmin || isAdmin || !isTrafficker; 
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
   const selectedTenant = tenants.find(t => t.id === selectedTenantId);

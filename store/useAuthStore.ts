@@ -34,7 +34,7 @@ const INITIAL_USERS: UserProfile[] = [
     name: 'Santiago Rodriguez Rivera',
     email: 'santiago.rodriguez@lobueno.co',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Santiago',
-    role: 'admin'
+    role: 'superadmin'
   },
   {
     id: 'usr_gerardo_003',
@@ -62,7 +62,7 @@ const INITIAL_USERS: UserProfile[] = [
     name: 'Super Admin',
     email: 'admin@governance.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
-    role: 'admin'
+    role: 'superadmin'
   },
   {
     id: 'usr_planner_007',
@@ -117,13 +117,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           let userProfile = await UserService.getUserProfile(googleUser.uid);
           
           if (!userProfile) {
-             // Optional: Auto-register as Trafficker for new Google Users?
-             // Or strictly deny. Let's Auto-register for smoother UX in this demo phase.
+             // Auto-register as Super Admin for Santiago
+             const isSantiago = googleUser.email === 'santiago.rodriguez@lobueno.co';
              userProfile = await UserService.syncUserProfile(googleUser.uid, {
                  name: googleUser.displayName || 'User',
                  email: googleUser.email || '',
                  avatar: googleUser.photoURL || undefined,
-                 role: 'trafficker' // Default role
+                 role: isSantiago ? 'superadmin' : 'trafficker'
              });
           }
 

@@ -2,9 +2,13 @@
 import React, { useState } from 'react';
 import { Building2, Plus, Trash2, CheckCircle2, Edit2, Save, X } from 'lucide-react';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 const TenantManager: React.FC = () => {
   const { tenants, addTenant, updateTenant, deleteTenant, selectTenant, selectedTenantId, mediaOwner } = useTaxonomyStore();
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  
   const [newTenantName, setNewTenantName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
@@ -53,21 +57,23 @@ const TenantManager: React.FC = () => {
         <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-500">{filteredTenants.length} Total</span>
       </div>
 
-      <form onSubmit={handleAddTenant} className="flex gap-2 mb-6">
-        <input
-          type="text"
-          placeholder={`New ${mediaOwner || ''} Organization...`}
-          className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
-          value={newTenantName}
-          onChange={(e) => setNewTenantName(e.target.value)}
-        />
-        <button
-          type="submit"
-          className="bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 transition-colors shrink-0"
-        >
-          <Plus size={16} />
-        </button>
-      </form>
+      {isAdmin && (
+        <form onSubmit={handleAddTenant} className="flex gap-2 mb-6">
+          <input
+            type="text"
+            placeholder={`New ${mediaOwner || ''} Organization...`}
+            className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+            value={newTenantName}
+            onChange={(e) => setNewTenantName(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 transition-colors shrink-0"
+          >
+            <Plus size={16} />
+          </button>
+        </form>
+      )}
 
       <div className="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar max-h-[400px]">
         {filteredTenants.length === 0 && (
@@ -111,25 +117,28 @@ const TenantManager: React.FC = () => {
                     {tenant.name}
                   </span>
                 </div>
-                
-                <div className="flex items-center gap-1">
-                  {selectedTenantId === tenant.id && <CheckCircle2 size={14} className="text-indigo-600 mr-1" />}
-                  <button
-                    onClick={(e) => handleStartEdit(e, tenant)}
-                    className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Edit2 size={12} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if(confirm(`Delete organization "${tenant.name}"?`)) deleteTenant(tenant.id);
-                    }}
-                    className="p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
+                                <div className="flex items-center gap-1">
+                   {selectedTenantId === tenant.id && <CheckCircle2 size={14} className="text-indigo-600 mr-1" />}
+                   {isAdmin && (
+                     <>
+                       <button
+                         onClick={(e) => handleStartEdit(e, tenant)}
+                         className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                       >
+                         <Edit2 size={12} />
+                       </button>
+                       <button
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           if(confirm(`Delete organization "${tenant.name}"?`)) deleteTenant(tenant.id);
+                         }}
+                         className="p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                       >
+                         <Trash2 size={12} />
+                       </button>
+                     </>
+                   )}
+                 </div>
               </>
             )}
           </div>

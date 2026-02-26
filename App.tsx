@@ -23,11 +23,12 @@ const App: React.FC = () => {
             let userProfile = await UserService.getUserProfile(user.uid);
             
             if (!userProfile) {
+                 const isSantiago = user.email === 'santiago.rodriguez@lobueno.co';
                  userProfile = await UserService.syncUserProfile(user.uid, {
                      name: user.displayName || 'User',
                      email: user.email || '',
                      avatar: user.photoURL || undefined,
-                     role: 'trafficker'
+                     role: isSantiago ? 'superadmin' : 'trafficker'
                  });
             }
 

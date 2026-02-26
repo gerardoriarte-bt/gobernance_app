@@ -40,7 +40,8 @@ const UserManager: React.FC = () => {
   };
 
   const roles: { id: UserRole, label: string, color: string }[] = [
-    { id: 'admin', label: 'Super Admin', color: 'bg-indigo-100 text-indigo-700' },
+    { id: 'superadmin', label: 'Super Admin', color: 'bg-indigo-600 text-white shadow-lg' },
+    { id: 'admin', label: 'Admin', color: 'bg-indigo-100 text-indigo-700' },
     { id: 'planner', label: 'Media Planner', color: 'bg-emerald-100 text-emerald-700' },
     { id: 'trafficker', label: 'Trafficker', color: 'bg-amber-100 text-amber-700' }
   ];

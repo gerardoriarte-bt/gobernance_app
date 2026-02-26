@@ -18,7 +18,10 @@ const ConfigView: React.FC<ConfigViewProps> = ({ setActiveView, canSave }) => {
   const { selectedTenantId, selectedClientId, tenants } = useTaxonomyStore();
   const selectedTenant = tenants.find(t => t.id === selectedTenantId);
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  const isSuperAdmin = user?.role === 'superadmin';
+  const isAdmin = user?.role === 'admin' || isSuperAdmin;
+  const isPlanner = user?.role === 'planner';
+  const canModifyConfig = isAdmin || isPlanner; 
 
   return (
     <div className="animate-in fade-in zoom-in-95 duration-300 space-y-12">
