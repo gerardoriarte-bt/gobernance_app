@@ -403,14 +403,22 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
   },
 
   deleteTenant: async (id: string) => {
+    const previousTenants = get().tenants;
+    const previousClients = get().clients;
+    
     set((state) => ({ 
         tenants: state.tenants.filter(t => t.id !== id),
         clients: state.clients.filter(c => c.tenantId !== id),
         selectedTenantId: state.selectedTenantId === id ? null : state.selectedTenantId
     }));
-    await TaxonomyService.deleteTenant(id);
-    // Also cleanup clients/taxonomies on server? Firestore doesn't cascade delete automatically.
-    // For this MVP, we leave orphans or handle server-side.
+
+    try {
+        await TaxonomyService.deleteTenant(id);
+    } catch (e) {
+        console.error("Delete tenant failed on server", e);
+        alert("Failed to delete organization on server. Reverting...");
+        set({ tenants: previousTenants, clients: previousClients });
+    }
   },
 
   selectTenant: (id: string | null) => set({ selectedTenantId: id, selectedClientId: null }),
@@ -463,11 +471,20 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
   },
 
   deleteClient: async (id: string) => {
+    const previousClients = get().clients;
+    
     set((state) => ({ 
         clients: state.clients.filter(c => c.id !== id),
         selectedClientId: state.selectedClientId === id ? null : state.selectedClientId
     }));
-    await TaxonomyService.deleteClient(id);
+
+    try {
+        await TaxonomyService.deleteClient(id);
+    } catch (e) {
+        console.error("Delete client failed on server", e);
+        alert("Failed to delete client on server. Reverting...");
+        set({ clients: previousClients });
+    }
   },
 
   saveTaxonomy: async () => {

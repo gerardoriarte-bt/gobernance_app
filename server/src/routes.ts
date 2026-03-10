@@ -41,9 +41,13 @@ router.put('/tenants/:id', async (req, res) => {
 
 router.delete('/tenants/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM tenants WHERE id = $1', [req.params.id]);
+    const { id } = req.params;
+    // Delete orphan taxonomies first (clients will cascade, but taxonomies won't)
+    await pool.query('DELETE FROM taxonomies WHERE tenant_id = $1', [id]);
+    await pool.query('DELETE FROM tenants WHERE id = $1', [id]);
     res.json({ success: true });
   } catch (e: any) {
+    console.error("Delete tenant error:", e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -127,9 +131,13 @@ router.put('/clients/:id', async (req, res) => {
 
 router.delete('/clients/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM clients WHERE id = $1', [req.params.id]);
+    const { id } = req.params;
+    // Delete associated taxonomies first to avoid FK constraint violation
+    await pool.query('DELETE FROM taxonomies WHERE client_id = $1', [id]);
+    await pool.query('DELETE FROM clients WHERE id = $1', [id]);
     res.json({ success: true });
   } catch (e: any) {
+    console.error("Delete client error:", e);
     res.status(500).json({ error: e.message });
   }
 });

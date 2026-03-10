@@ -43,8 +43,8 @@ export const initDB = async () => {
     await client.query(`
       CREATE TABLE IF NOT EXISTS taxonomies (
         id VARCHAR(50) PRIMARY KEY,
-        tenant_id VARCHAR(50) REFERENCES tenants(id),
-        client_id VARCHAR(50) REFERENCES clients(id),
+        tenant_id VARCHAR(50) REFERENCES tenants(id) ON DELETE CASCADE,
+        client_id VARCHAR(50) REFERENCES clients(id) ON DELETE CASCADE,
         campaign_name VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         date_string VARCHAR(100),
