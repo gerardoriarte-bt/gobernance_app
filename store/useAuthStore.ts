@@ -100,12 +100,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const googleUser = result.user;
 
       // Validate email domain
-      const allowedDomains = ['lobueno.co', 'buentipo.com', 'hermano.com'];
+      const allowedDomains = ['lobueno.co', 'buentipo.com', 'hermano.com', 'antpack.co'];
       const userEmail = googleUser.email || '';
       const emailDomain = userEmail.split('@')[1];
 
       if (!emailDomain || !allowedDomains.includes(emailDomain)) {
-         alert(`Acceso denegado: El dominio @${emailDomain || 'desconocido'} no está autorizado. Solo lobueno.co, buentipo.com y hermano.com están permitidos.`);
+         alert(`Acceso denegado: El dominio @${emailDomain || 'desconocido'} no está autorizado. Solo lobueno.co, buentipo.com, hermano.com y antpack.co están permitidos.`);
          await auth.signOut();
          set({ isLoading: false, isAuthenticated: false, user: null });
          return;
