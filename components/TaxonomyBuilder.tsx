@@ -62,22 +62,33 @@ const TaxonomyBuilder: React.FC = () => {
   );
 };
 
-const MediaOwnerSelector: React.FC<{ onSelect: (owner: 'Buentipo' | 'Hermano' | 'LoBueno') => void }> = ({ onSelect }) => {
+type MediaOwner = 'Buentipo' | 'Hermano' | 'LoBueno' | 'AntPack';
+
+const MediaOwnerSelector: React.FC<{ onSelect: (owner: MediaOwner) => void }> = ({ onSelect }) => {
     return (
         <div className="fixed inset-0 bg-slate-50 z-[100] flex items-center justify-center p-6">
             <div className="max-w-5xl w-full bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 overflow-hidden flex flex-col md:flex-row">
                 
                 {/* Left: Selection */}
                 <div className="flex-1 p-12 md:p-16 flex flex-col justify-center">
-                    <div className="mb-10">
-                        <h1 className="text-4xl font-black text-slate-900 tracking-tighter mb-4">MEDIA OWNER</h1>
-                        <p className="text-slate-500 font-medium text-lg leading-relaxed">
-                            Select the media owner to configure the workspace context.
-                        </p>
+                    <div className="text-center mb-16 space-y-4">
+                       <div className="inline-flex items-center justify-center mb-4">
+                          <img src="/lobueno-logo.png" alt="Lo Bueno" className="h-[120px] w-auto object-contain" />
+                       </div>
+                       
+                       <div className="space-y-2">
+                         <h3 className="text-indigo-600 font-black uppercase tracking-[0.2em] text-sm">Governance Engine</h3>
+                         <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter">
+                           Standardize your campaign taxonomy with precision.
+                         </h1>
+                       </div>
+                       <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto pt-4">
+                         Enterprise naming convention system. Please sign in to proceed.
+                       </p>
                     </div>
 
                     <div className="space-y-4">
-                        {(['Buentipo', 'Hermano', 'LoBueno'] as const).map((owner) => (
+                        {(['Buentipo', 'Hermano', 'LoBueno', 'AntPack'] as const).map((owner) => (
                             <button
                                 key={owner}
                                 onClick={() => onSelect(owner)}
@@ -96,7 +107,7 @@ const MediaOwnerSelector: React.FC<{ onSelect: (owner: 'Buentipo' | 'Hermano' | 
                 <div className="md:w-[400px] bg-slate-900 text-white p-12 flex flex-col justify-between relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full blur-[100px] opacity-20 -translate-y-1/2 translate-x-1/2"></div>
                     
-                    <div className="relative z-10">
+                    <div className="relative z-10 hidden md:block">
                          <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-sm">
                             <div className="w-6 h-6 border-2 border-white rounded-full"></div>
                          </div>

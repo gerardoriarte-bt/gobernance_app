@@ -16,16 +16,19 @@ import { UserRole } from '../types';
       </div>
 
       <div className="max-w-4xl w-full z-10">
-        <div className="text-center mb-16 space-y-6">
-           <div className="inline-flex items-center justify-center mb-6">
-              <img src="/lobueno-logo.png" alt="Lo Bueno" className="h-[140px] w-auto object-contain" />
+        <div className="text-center mb-16 space-y-4">
+           <div className="inline-flex items-center justify-center mb-4">
+              <img src="/lobueno-logo.png" alt="Lo Bueno" className="h-[120px] w-auto object-contain" />
            </div>
            
-           <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight hidden">
-             Governance Builder
-           </h1>
-           <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto">
-             Enterprise naming convention system. Please select your access level to proceed.
+           <div className="space-y-2">
+             <h3 className="text-indigo-600 font-black uppercase tracking-[0.2em] text-sm">Governance Engine</h3>
+             <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter">
+               Standardize your campaign taxonomy with precision.
+             </h1>
+           </div>
+           <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto pt-4">
+             Enterprise naming convention system. Please sign in to proceed.
            </p>
         </div>
 
