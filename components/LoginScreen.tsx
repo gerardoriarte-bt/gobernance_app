@@ -17,18 +17,16 @@ import { UserRole } from '../types';
 
       <div className="max-w-4xl w-full z-10">
         <div className="text-center mb-16 space-y-4">
-           <div className="inline-flex items-center justify-center mb-4">
-              <img src="/lobueno-logo.png" alt="Lo Bueno" className="h-[120px] w-auto object-contain" />
-           </div>
-           
-           <div className="space-y-2">
-             <h3 className="text-indigo-600 font-black uppercase tracking-[0.2em] text-sm">Governance Engine</h3>
-             <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter">
-               Standardize your campaign taxonomy with precision.
+           <div className="space-y-3">
+             <div className="inline-block px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full">
+                <h3 className="text-indigo-600 font-black uppercase tracking-[0.2em] text-[10px]">Governance Engine</h3>
+             </div>
+             <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[0.9]">
+               Standardize your campaign<br/>taxonomy with precision.
              </h1>
            </div>
-           <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto pt-4">
-             Enterprise naming convention system. Please sign in to proceed.
+           <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto pt-6 opacity-80">
+             Enterprise naming convention system for high-performance media teams.
            </p>
         </div>
 
@@ -54,9 +52,13 @@ import { UserRole } from '../types';
                <span>•</span>
                <span>Secure Environment</span>
            </div>
-           <div className="mt-4 pt-4 border-t border-slate-300 w-full max-w-xs text-center opacity-70">
-               Platform by Tecnología Buentipo
-           </div>
+            <div className="mt-8 flex items-center justify-center gap-2 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+               <span className="text-[10px] uppercase tracking-widest font-black text-slate-400">Powered by</span>
+               <img src="/lobueno-logo.png" alt="Lo Bueno" className="h-10 w-auto object-contain" />
+            </div>
+            <div className="mt-2 text-[9px] uppercase tracking-[0.3em] font-bold text-slate-300">
+               Tecnología Buentipo
+            </div>
         </div>
       </div>
     </div>

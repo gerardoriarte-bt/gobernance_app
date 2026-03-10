@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
 import { useAuthStore } from '../store/useAuthStore';
 import TaxonomyHeader from './TaxonomyHeader';
@@ -70,36 +71,39 @@ const MediaOwnerSelector: React.FC<{ onSelect: (owner: MediaOwner) => void }> = 
             <div className="max-w-5xl w-full bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 overflow-hidden flex flex-col md:flex-row">
                 
                 {/* Left: Selection */}
-                <div className="flex-1 p-12 md:p-16 flex flex-col justify-center">
-                    <div className="text-center mb-16 space-y-4">
-                       <div className="inline-flex items-center justify-center mb-4">
-                          <img src="/lobueno-logo.png" alt="Lo Bueno" className="h-[120px] w-auto object-contain" />
-                       </div>
-                       
-                       <div className="space-y-2">
-                         <h3 className="text-indigo-600 font-black uppercase tracking-[0.2em] text-sm">Governance Engine</h3>
-                         <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter">
-                           Standardize your campaign taxonomy with precision.
-                         </h1>
-                       </div>
-                       <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto pt-4">
-                         Enterprise naming convention system. Please sign in to proceed.
-                       </p>
+                <div className="flex-1 p-12 md:p-16 flex flex-col justify-center bg-white relative">
+                    <div className="mb-12 text-center md:text-left">
+                        <div className="inline-block px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full mb-4">
+                            <h3 className="text-indigo-600 font-black uppercase tracking-[0.2em] text-[10px]">Governance Engine</h3>
+                        </div>
+                        <h1 className="text-4xl font-black text-slate-900 tracking-tighter mb-4 leading-tight">
+                            Select Workspace<br/>Media Owner
+                        </h1>
+                        <p className="text-slate-500 font-medium text-base">
+                            Choose the organization context for your naming convention.
+                        </p>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {(['Buentipo', 'Hermano', 'LoBueno', 'AntPack'] as const).map((owner) => (
                             <button
                                 key={owner}
                                 onClick={() => onSelect(owner)}
-                                className="group w-full flex items-center justify-between p-6 bg-white border-2 border-slate-100 rounded-2xl hover:border-indigo-600 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                                className="group flex flex-col items-start p-6 bg-slate-50 border-2 border-transparent rounded-2xl hover:border-indigo-600 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left"
                             >
-                                <span className="text-lg font-bold text-slate-700 group-hover:text-indigo-700 transition-colors uppercase tracking-wider">{owner}</span>
-                                <div className="w-8 h-8 rounded-full bg-slate-50 group-hover:bg-indigo-600 text-slate-300 group-hover:text-white flex items-center justify-center transition-all">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-current" />
+                                <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center mb-4 group-hover:bg-indigo-600 transition-colors">
+                                    <ArrowRight size={18} className="text-slate-400 group-hover:text-white transition-colors" />
                                 </div>
+                                <span className="text-lg font-black text-slate-900 group-hover:text-indigo-700 transition-colors uppercase tracking-tight">{owner}</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Workspace</span>
                             </button>
                         ))}
+                    </div>
+
+                    {/* Minimalist Footer Logo */}
+                    <div className="mt-16 pt-8 border-t border-slate-100 flex items-center justify-center md:justify-start gap-3 opacity-40 hover:opacity-100 transition-opacity">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Powered by</span>
+                        <img src="/lobueno-logo.png" alt="Lo Bueno" className="h-6 w-auto grayscale" />
                     </div>
                 </div>
 
