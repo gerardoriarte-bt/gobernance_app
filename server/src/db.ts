@@ -154,5 +154,27 @@ const seedData = async (client: any) => {
     JSON.stringify(masterSchema.structures)
   ]);
 
+  // 4. Seed AntPack Tenant
+  const antPackTenantId = 'tenant_antpack_001';
+  await client.query(`
+    INSERT INTO tenants (id, name, media_owner)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (id) DO NOTHING
+  `, [antPackTenantId, 'AntPack Governance', 'AntPack']);
+
+  // 5. Seed Initial Client for AntPack
+  const antPackClientId = 'client_antpack_001';
+  await client.query(`
+    INSERT INTO clients (id, tenant_id, name, dictionaries, structures)
+    VALUES ($1, $2, $3, $4, $5)
+    ON CONFLICT (id) DO NOTHING
+  `, [
+    antPackClientId, 
+    antPackTenantId, 
+    'AntPack Master Config', 
+    JSON.stringify(masterSchema.dictionaries), 
+    JSON.stringify(masterSchema.structures)
+  ]);
+
   console.log('Seeding Complete.');
 };

@@ -52,7 +52,7 @@ export interface Tenant {
   mediaOwner?: string; // 'Buentipo' | 'Hermano' | 'LoBueno'
 }
 
-export type MediaOwner = 'Buentipo' | 'Hermano' | 'LoBueno';
+export type MediaOwner = 'Buentipo' | 'Hermano' | 'LoBueno' | 'AntPack';
 
 export interface Client {
   id: string;
