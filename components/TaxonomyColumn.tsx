@@ -150,7 +150,7 @@ const TaxonomyColumn: React.FC<TaxonomyColumnProps> = ({ level, title, descripti
                 {/* Custom Field Rendering */}
                 
                 {/* 1. Creative Variation (Free Text + Datalist) */}
-                {field === 'creativeVariation' ? (
+                {field === 'CreativeVariation' ? (
                   <div className="relative">
                     <input
                       type="text"

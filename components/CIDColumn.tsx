@@ -17,7 +17,7 @@ const CIDColumn: React.FC = () => {
 
   const [showBuilder, setShowBuilder] = useState(false);
 
-  const launchDate = campaignValues['launchDate'] || '';
+  const launchDate = campaignValues['LaunchDate'] || '';
   
   // Helper to check if a field has a value
   const hasValue = (val: string | undefined) => val && val.length > 0;
@@ -121,9 +121,9 @@ const CIDColumn: React.FC = () => {
                        if(date) {
                            const [y, m, d] = date.split('-');
                            const formatted = `${d}${m}${y}`;
-                           setFieldValue('campaign', 'launchDate', formatted); // Store formatted for string generation
+                           setFieldValue('campaign', 'LaunchDate', formatted); // Store formatted for string generation
                        } else {
-                           setFieldValue('campaign', 'launchDate', '');
+                           setFieldValue('campaign', 'LaunchDate', '');
                        }
                   }}
                 />
@@ -144,7 +144,7 @@ const CIDColumn: React.FC = () => {
              <div className="space-y-1">
                  <label className="text-[9px] font-bold text-slate-400 uppercase">Campaign ID Token</label>
                  <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-[10px] font-mono text-indigo-700 break-all">
-                     {campaignValues['campaignId'] || '---'}
+                     {campaignValues['CampaignId'] || '---'}
                  </div>
              </div>
 
@@ -152,7 +152,7 @@ const CIDColumn: React.FC = () => {
              <div className="space-y-1">
                  <label className="text-[9px] font-bold text-slate-400 uppercase">Ad Set ID Token</label>
                  <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-[10px] font-mono text-indigo-700 break-all">
-                     {adsetValues['adsetId'] || '---'}
+                     {adsetValues['AdsetId'] || '---'}
                  </div>
              </div>
 
@@ -160,7 +160,7 @@ const CIDColumn: React.FC = () => {
              <div className="space-y-1">
                  <label className="text-[9px] font-bold text-slate-400 uppercase">Ad ID Token</label>
                  <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-[10px] font-mono text-indigo-700 break-all">
-                     {adValues['adId'] || '---'}
+                     {adValues['AdId'] || '---'}
                  </div>
              </div>
         </div>

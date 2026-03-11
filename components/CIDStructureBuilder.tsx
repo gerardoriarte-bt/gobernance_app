@@ -17,12 +17,13 @@ export const CIDStructureBuilder: React.FC<CIDStructureBuilderProps> = ({ onClos
   // Ideally we should list keys that are 'in' the taxonomy, or just available ones.
   
   const SPECIAL_FIELDS = [
-      { key: 'campaignName', label: 'Campaign Name String' },
-      { key: 'mediaOwner', label: 'Media Owner' },
-      { key: 'campaignId', label: 'Campaign ID Token' },
-      { key: 'adsetId', label: 'Ad Set ID Token' },
-      { key: 'adId', label: 'Ad ID Token' },
-      { key: 'launchDate', label: 'Launch Date' }
+      { key: 'CampaignName', label: 'CampaignName' },
+      { key: 'campaignString', label: 'Campaign Convention String' },
+      { key: 'mediaOwner', label: 'Owner' },
+      { key: 'campaignId', label: 'Campaign.ID' },
+      { key: 'adsetId', label: 'AdSet.ID' },
+      { key: 'adId', label: 'Ad.ID' },
+      { key: 'LaunchDate', label: 'LaunchDate' }
   ];
 
   // Get other potential fields from dictionaries that are typically campaign level
@@ -53,7 +54,7 @@ export const CIDStructureBuilder: React.FC<CIDStructureBuilderProps> = ({ onClos
 
   const getLabel = (key: string) => {
       const special = SPECIAL_FIELDS.find(sf => sf.key === key);
-      return special ? special.label : key.replace(/([A-Z])/g, ' $1').trim(); // Basic formatting
+      return special ? special.label : key; 
   };
 
   const handleSave = () => {

@@ -33,7 +33,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
   dictionaries: getStorage('dictionaries', MASTER_SCHEMA.dictionaries),
   structures: getStorage('structures', MASTER_SCHEMA.structures),
   dependencies: getStorage('dependencies', MASTER_SCHEMA.dependencies),
-  cidStructure: getStorage('cidStructure', ['campaignName', 'mediaOwner', 'campaignId', 'adsetId', 'adId']),
+  cidStructure: getStorage('cidStructure', ['Channel', 'Country', 'Audience', 'Platform', 'CampaignName', 'Objective', 'FunnelStage', 'BudgetSource', 'LaunchDate', 'mediaOwner', 'CampaignId', 'AdsetId', 'AdId']),
   
   generatedStrings: {
     campaign: '',
@@ -74,7 +74,8 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
         const campaignStr = state.generatedStrings.campaign;
 
         const cidParts = state.cidStructure.map(field => {
-            if (field === 'campaignName') return campaignStr;
+            if (field === 'campaignString') return campaignStr;
+            if (field === 'CampaignName') return campaignValues['CampaignName'] || '';
             if (field === 'mediaOwner') return owner || 'UNK';
             return campaignValues[field] || adsetValues[field] || adValues[field] || '';
         });
@@ -122,7 +123,8 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
           // Recalculate CID
           const campaignStr = state.generatedStrings.campaign;
           const cidParts = structure.map(field => {
-            if (field === 'campaignName') return campaignStr;
+            if (field === 'campaignString') return campaignStr;
+            if (field === 'CampaignName') return state.campaignValues['CampaignName'] || '';
             if (field === 'mediaOwner') return state.mediaOwner || 'UNK';
             return state.campaignValues[field] || state.adsetValues[field] || state.adValues[field] || '';
           });
@@ -245,7 +247,8 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       
       // Calculate CID (Dynamic)
       const cidParts = state.cidStructure.map(field => {
-        if (field === 'campaignName') return campaignStr;
+        if (field === 'campaignString') return campaignStr;
+        if (field === 'CampaignName') return state.campaignValues['CampaignName'] || '';
         if (field === 'mediaOwner') return state.mediaOwner || 'UNK';
         return state.campaignValues[field] || state.adsetValues[field] || state.adValues[field] || '';
       });
@@ -253,8 +256,8 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
 
       const adsetStr = resolveStructure(nextStructures.adset, state.adsetValues, { parentCampaign: campaignStr }, { transform: (s) => s });
       const adStr = resolveStructure(nextStructures.ad, state.adValues, { 
-        parentCampaignName: state.campaignValues.campaignName || '', 
-        parentProvider: state.campaignValues.provider || '' 
+        parentCampaignName: state.campaignValues.CampaignName || '', 
+        parentPlatform: state.campaignValues.Platform || '' 
       }, { transform: (s) => s });
 
       return { 
@@ -294,7 +297,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
           const currentVal = level === 'campaign' ? nextCampaignValues[dep.filter] : level === 'adset' ? nextAdsetValues[dep.filter] : nextAdValues[dep.filter];
           if (currentVal && dep.allow && !dep.allow.includes(currentVal)) {
             const isSocialProvider = ["Meta", "Meta Ads", "TikTok", "LinkedIn", "Pinterest", "Snapchat", "X"].includes(value);
-            const fallbackValue = (isSocialProvider && dep.filter === 'channel') ? 'Social Media' : '';
+            const fallbackValue = (isSocialProvider && dep.filter === 'Channel') ? 'Social Media' : '';
             
             if (level === 'campaign') nextCampaignValues[dep.filter] = fallbackValue;
             if (level === 'adset') nextAdsetValues[dep.filter] = fallbackValue;
@@ -311,26 +314,25 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
          // But we only need to inject IDs based on Provider.
     }
 
-    // Force injection logic if provider changed
-    if (level === 'campaign' && ['provider', 'publisher', 'platform'].includes(field.toLowerCase())) {
+    // Force injection logic if Platform changed
+    if (level === 'campaign' && ['platform', 'publisher', 'provider'].includes(field.toLowerCase())) {
          const normalizedValue = value.trim().toLowerCase();
          const isMeta = ['meta', 'facebook', 'meta ads', 'instagram', 'fb'].includes(normalizedValue);
          const isGoogle = ['google ads', 'google', 'youtube', 'dv360', 'gg'].includes(normalizedValue);
 
          if (isMeta) {
-             nextCampaignValues['campaignId'] = '{{campaign.id}}';
-             nextAdsetValues['adsetId'] = '{{adset.id}}';
-             nextAdValues['adId'] = '{{ad.id}}';
+             nextCampaignValues['CampaignId'] = '{{campaign.id}}';
+             nextAdsetValues['AdsetId'] = '{{adset.id}}';
+             nextAdValues['AdId'] = '{{ad.id}}';
          } else if (isGoogle) {
-             nextCampaignValues['campaignId'] = '{campaignid}';
-             nextAdsetValues['adsetId'] = '{adgroupid}';
-             nextAdValues['adId'] = '{creative}'; // Removed {matchtype} {keyword} as requested
+             nextCampaignValues['CampaignId'] = '{campaignid}';
+             nextAdsetValues['AdsetId'] = '{adgroupid}';
+             nextAdValues['AdId'] = '{creative}'; // Removed {matchtype} {keyword} as requested
          } else {
-             // Random ID Fallback for other providers
-             const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-             nextCampaignValues['campaignId'] = `CID_${randomId}`;
-             nextAdsetValues['adsetId'] = `AID_${randomId}`;
-             nextAdValues['adId'] = `CR_${randomId}`;
+             // Non-Meta/Google: Tokens are removed/empty for CID governance
+             nextCampaignValues['CampaignId'] = '';
+             nextAdsetValues['AdsetId'] = '';
+             nextAdValues['AdId'] = '';
          }
     }
     // ------------------------------------------------
@@ -356,7 +358,8 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
 
     // --- Final CID Generation (Dynamic) ---
     const cidParts = state.cidStructure.map(field => {
-        if (field === 'campaignName') return campaignStr;
+        if (field === 'campaignString') return campaignStr;
+        if (field === 'CampaignName') return nextCampaignValues['CampaignName'] || '';
         if (field === 'mediaOwner') return state.mediaOwner || 'UNK';
         return nextCampaignValues[field] || nextAdsetValues[field] || nextAdValues[field] || '';
     });
@@ -364,8 +367,8 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
 
     const adsetStr = resolveStructure(state.structures.adset, nextAdsetValues, { parentCampaign: campaignStr }, { transform: (s) => s });
     const adStr = resolveStructure(state.structures.ad, nextAdValues, { 
-      parentCampaignName: nextCampaignValues.campaignName || '', 
-      parentProvider: nextCampaignValues.provider || '' 
+      parentCampaignName: nextCampaignValues.CampaignName || '', 
+      parentPlatform: nextCampaignValues.Platform || '' 
     }, { transform: (s) => s });
 
     set({
@@ -438,7 +441,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
                   dictionaries: client.dictionaries,
                   structures: client.structures,
                   // [NEW] Load structure or default
-                  cidStructure: client.cidStructure || ['campaignName', 'mediaOwner', 'campaignId', 'adsetId', 'adId']
+                  cidStructure: client.cidStructure || ['Channel', 'Country', 'Audience', 'Platform', 'CampaignName', 'Objective', 'FunnelStage', 'BudgetSource', 'LaunchDate', 'mediaOwner', 'CampaignId', 'AdsetId', 'AdId']
               };
           } else {
               // Fallback to defaults or what's in memory/localstorage if new client
@@ -506,7 +509,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       id: crypto.randomUUID(),
       clientId: selectedClientId,
       tenantId: selectedTenantId,
-      campaignName: campaignValues['campaignName'] || 'Untitled',
+      campaignName: campaignValues['CampaignName'] || 'Untitled',
       date: new Date().toLocaleDateString(),
       strings: { ...generatedStrings },
       values: {
@@ -515,7 +518,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
         ad: { ...adValues }
       },
       cid: generatedStrings.campaign,
-      platform: campaignValues['provider'] || 'Unknown'
+      platform: campaignValues['Platform'] || 'Unknown'
     };
 
     set((state) => ({ savedTaxonomies: [newRecord, ...state.savedTaxonomies] }));
@@ -565,7 +568,8 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       
       // Calculate CID (Dynamic)
       const cidParts = state.cidStructure.map(field => {
-        if (field === 'campaignName') return campaignStr;
+        if (field === 'campaignString') return campaignStr;
+        if (field === 'CampaignName') return draft.campaignValues['CampaignName'] || '';
         if (field === 'mediaOwner') return state.mediaOwner || 'UNK';
         return draft.campaignValues[field] || draft.adsetValues[field] || draft.adValues[field] || '';
       });
@@ -573,8 +577,8 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
 
       const adsetStr = resolveStructure(state.structures.adset, draft.adsetValues, { parentCampaign: campaignStr }, { transform: (s) => s });
       const adStr = resolveStructure(state.structures.ad, draft.adValues, { 
-        parentCampaignName: draft.campaignValues.campaignName || '', 
-        parentProvider: draft.campaignValues.provider || '' 
+        parentCampaignName: draft.campaignValues.CampaignName || '', 
+        parentPlatform: draft.campaignValues.Platform || '' 
       }, { transform: (s) => s });
 
       return {
@@ -615,27 +619,27 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
           };
 
           // Campaign
-          get().setFieldValue('campaign', 'campaignName', 'DemoCampaign');
-          get().setFieldValue('campaign', 'country', getRandom('country'));
-          get().setFieldValue('campaign', 'budgetSource', getRandom('budgetSource'));
-          get().setFieldValue('campaign', 'objective', getRandom('objective'));
-          get().setFieldValue('campaign', 'channel', 'Social Media'); // Hardcode to ensure correlation
-          get().setFieldValue('campaign', 'funnel', getRandom('funnel'));
-          get().setFieldValue('campaign', 'provider', 'Meta'); // Default to Meta for ID check
+          get().setFieldValue('campaign', 'CampaignName', 'DemoCampaign');
+          get().setFieldValue('campaign', 'Country', getRandom('Country'));
+          get().setFieldValue('campaign', 'BudgetSource', getRandom('BudgetSource'));
+          get().setFieldValue('campaign', 'Objective', getRandom('Objective'));
+          get().setFieldValue('campaign', 'Channel', 'Social Media'); // Hardcode to ensure correlation
+          get().setFieldValue('campaign', 'FunnelStage', getRandom('FunnelStage'));
+          get().setFieldValue('campaign', 'Platform', 'Meta'); // Default to Meta for ID check
           
           // CID Specifics
-          get().setFieldValue('campaign', 'launchDate', '2025-11-15'); // YYYY-MM-DD for input
-
+          get().setFieldValue('campaign', 'LaunchDate', '2025-11-15'); // YYYY-MM-DD for input
+          
           // AdSet
-          get().setFieldValue('adset', 'audienceStrategy', 'DABA');
-          get().setFieldValue('adset', 'audienceSegment', 'Broad'); // Dependency
-          get().setFieldValue('adset', 'placement', getRandom('placement'));
-
+          get().setFieldValue('adset', 'Audience', 'DABA');
+          get().setFieldValue('adset', 'AudienceSegment', 'Broad'); // Dependency
+          get().setFieldValue('adset', 'Placement', getRandom('Placement'));
+          
           // Ad
-          get().setFieldValue('ad', 'creativeFormat', 'SixSec');
-          get().setFieldValue('ad', 'creativeSpecs', '16x9');
-          get().setFieldValue('ad', 'creativeConcept', getRandom('creativeConcept'));
-          get().setFieldValue('ad', 'creativeVariation', 'Main');
+          get().setFieldValue('ad', 'CreativeFormat', 'SixSec');
+          get().setFieldValue('ad', 'CreativeSpecs', '16x9');
+          get().setFieldValue('ad', 'CreativeConcept', getRandom('CreativeConcept'));
+          get().setFieldValue('ad', 'CreativeVariation', 'Main');
 
           alert("Mock Data Filled!");
       }, 100); // Small delay to allow state updates if tenant/client were null
@@ -658,7 +662,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
         const resetDicts = { ...MASTER_SCHEMA.dictionaries };
         const resetStructures = { ...MASTER_SCHEMA.structures };
         const resetDeps = { ...MASTER_SCHEMA.dependencies };
-        const resetCidStructure = ['campaignName', 'mediaOwner', 'campaignId', 'adsetId', 'adId'];
+        const resetCidStructure = ['Channel', 'Country', 'Audience', 'Platform', 'CampaignName', 'Objective', 'FunnelStage', 'BudgetSource', 'LaunchDate', 'mediaOwner', 'CampaignId', 'AdsetId', 'AdId'];
 
         // Save to local storage for persistence
         setStorage('dictionaries', resetDicts);
