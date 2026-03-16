@@ -112,8 +112,18 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
         state.selectedClientId, 
         state.dictionaries, 
         state.structures,
-        state.cidStructure // [NEW] Sync Structure
+        state.cidStructure
     );
+
+    // CRITICAL: Also update the in-memory client object so that
+    // re-selecting the client doesn't load a stale cidStructure
+    set((s) => ({
+      clients: s.clients.map(c => 
+        c.id === state.selectedClientId 
+          ? { ...c, dictionaries: state.dictionaries, structures: state.structures, cidStructure: state.cidStructure }
+          : c
+      )
+    }));
   },
 
   setCidStructure: (structure: string[]) => {

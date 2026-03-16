@@ -20,9 +20,9 @@ export const CIDStructureBuilder: React.FC<CIDStructureBuilderProps> = ({ onClos
       { key: 'CampaignName', label: 'CampaignName' },
       { key: 'campaignString', label: 'Campaign Convention String' },
       { key: 'mediaOwner', label: 'Owner' },
-      { key: 'campaignId', label: 'Campaign.ID' },
-      { key: 'adsetId', label: 'AdSet.ID' },
-      { key: 'adId', label: 'Ad.ID' },
+      { key: 'CampaignId', label: 'Campaign.ID' },
+      { key: 'AdsetId', label: 'AdSet.ID' },
+      { key: 'AdId', label: 'Ad.ID' },
       { key: 'LaunchDate', label: 'LaunchDate' }
   ];
 
