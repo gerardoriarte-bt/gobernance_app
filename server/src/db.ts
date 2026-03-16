@@ -30,6 +30,7 @@ export const initDB = async () => {
         name VARCHAR(255) NOT NULL,
         dictionaries JSONB,
         structures JSONB,
+        cid_structure JSONB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -37,6 +38,7 @@ export const initDB = async () => {
     // Migration: Add columns if they don't exist (for existing deployments)
     await client.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS dictionaries JSONB;`);
     await client.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS structures JSONB;`);
+    await client.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS cid_structure JSONB;`);
     await client.query(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS media_owner VARCHAR(50);`);
 
     // Taxonomies Table

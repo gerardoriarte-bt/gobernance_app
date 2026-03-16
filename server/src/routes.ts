@@ -70,7 +70,8 @@ router.get('/clients', async (req, res) => {
       name: r.name, 
       tenantId: r.tenant_id, 
       dictionaries: r.dictionaries, 
-      structures: r.structures 
+      structures: r.structures,
+      cidStructure: r.cid_structure
     }));
     res.json(mapped);
   } catch (e: any) {
@@ -79,13 +80,13 @@ router.get('/clients', async (req, res) => {
 });
 
 router.post('/clients', async (req, res) => {
-  const { id, name, tenantId, dictionaries, structures } = req.body;
+  const { id, name, tenantId, dictionaries, structures, cidStructure } = req.body;
   try {
     await pool.query(
-      'INSERT INTO clients (id, name, tenant_id, dictionaries, structures) VALUES ($1, $2, $3, $4, $5)', 
-      [id, name, tenantId, JSON.stringify(dictionaries || {}), JSON.stringify(structures || {})]
+      'INSERT INTO clients (id, name, tenant_id, dictionaries, structures, cid_structure) VALUES ($1, $2, $3, $4, $5, $6)', 
+      [id, name, tenantId, JSON.stringify(dictionaries || {}), JSON.stringify(structures || {}), JSON.stringify(cidStructure || null)]
     );
-    res.status(201).json({ id, name, tenantId, dictionaries, structures });
+    res.status(201).json({ id, name, tenantId, dictionaries, structures, cidStructure });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -93,7 +94,7 @@ router.post('/clients', async (req, res) => {
 
 router.put('/clients/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, dictionaries, structures } = req.body;
+  const { name, dictionaries, structures, cidStructure } = req.body;
   try {
     // Dynamic update query
     let query = 'UPDATE clients SET ';
@@ -112,6 +113,10 @@ router.put('/clients/:id', async (req, res) => {
     if (structures !== undefined) {
       updates.push(`structures = $${idx++}`);
       params.push(JSON.stringify(structures));
+    }
+    if (cidStructure !== undefined) {
+      updates.push(`cid_structure = $${idx++}`);
+      params.push(JSON.stringify(cidStructure));
     }
 
     if (updates.length === 0) {

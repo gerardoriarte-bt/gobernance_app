@@ -17,6 +17,36 @@ const setStorage = <T>(key: string, value: T): void => {
   localStorage.setItem(key, JSON.stringify(value));
 };
 
+const getValueCaseInsensitive = (map: Record<string, string>, field: string) => {
+  if (!map) return '';
+  const key = Object.keys(map).find(k => k.toLowerCase() === field.toLowerCase());
+  return key ? map[key] : '';
+};
+
+const generateCid = (
+  structure: string[], 
+  campaignValues: Record<string, string>, 
+  adsetValues: Record<string, string>, 
+  adValues: Record<string, string>, 
+  mediaOwner: string | null, 
+  campaignStr: string
+): string => {
+  const cidParts = structure.map(field => {
+      if (field === 'campaignString') return campaignStr;
+      
+      // Look up specially mapped
+      if (field.toLowerCase() === 'campaignname') {
+          return getValueCaseInsensitive(campaignValues, 'CampaignName') || '';
+      }
+      if (field.toLowerCase() === 'mediaowner') return mediaOwner || 'UNK';
+      
+      return getValueCaseInsensitive(campaignValues, field) || 
+             getValueCaseInsensitive(adsetValues, field) || 
+             getValueCaseInsensitive(adValues, field) || '';
+  });
+  return cidParts.filter(p => p && p.trim().length > 0).join('/');
+};
+
 export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
   campaignValues: {},
   adsetValues: {},
@@ -73,13 +103,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
         const adValues = state.adValues;
         const campaignStr = state.generatedStrings.campaign;
 
-        const cidParts = state.cidStructure.map(field => {
-            if (field === 'campaignString') return campaignStr;
-            if (field === 'CampaignName') return campaignValues['CampaignName'] || '';
-            if (field === 'mediaOwner') return owner || 'UNK';
-            return campaignValues[field] || adsetValues[field] || adValues[field] || '';
-        });
-        const finalCid = cidParts.filter(p => p && p.trim().length > 0).join('/');
+        const finalCid = generateCid(state.cidStructure, campaignValues, adsetValues, adValues, owner, campaignStr);
 
         return { 
             ...newState, 
@@ -132,13 +156,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
           
           // Recalculate CID
           const campaignStr = state.generatedStrings.campaign;
-          const cidParts = structure.map(field => {
-            if (field === 'campaignString') return campaignStr;
-            if (field === 'CampaignName') return state.campaignValues['CampaignName'] || '';
-            if (field === 'mediaOwner') return state.mediaOwner || 'UNK';
-            return state.campaignValues[field] || state.adsetValues[field] || state.adValues[field] || '';
-          });
-          const finalCid = cidParts.filter(p => p && p.trim().length > 0).join('/');
+          const finalCid = generateCid(structure, state.campaignValues, state.adsetValues, state.adValues, state.mediaOwner, campaignStr);
 
           return { 
               cidStructure: structure,
@@ -256,13 +274,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       const campaignStr = resolveStructure(nextStructures.campaign, state.campaignValues, {}, { transform: (s) => s });
       
       // Calculate CID (Dynamic)
-      const cidParts = state.cidStructure.map(field => {
-        if (field === 'campaignString') return campaignStr;
-        if (field === 'CampaignName') return state.campaignValues['CampaignName'] || '';
-        if (field === 'mediaOwner') return state.mediaOwner || 'UNK';
-        return state.campaignValues[field] || state.adsetValues[field] || state.adValues[field] || '';
-      });
-      const finalCid = cidParts.filter(p => p && p.trim().length > 0).join('/');
+      const finalCid = generateCid(state.cidStructure, state.campaignValues, state.adsetValues, state.adValues, state.mediaOwner, campaignStr);
 
       const adsetStr = resolveStructure(nextStructures.adset, state.adsetValues, { parentCampaign: campaignStr }, { transform: (s) => s });
       const adStr = resolveStructure(nextStructures.ad, state.adValues, { 
@@ -367,13 +379,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
     const campaignStr = resolveStructure(state.structures.campaign, nextCampaignValues, {}, { transform: (s) => s });
 
     // --- Final CID Generation (Dynamic) ---
-    const cidParts = state.cidStructure.map(field => {
-        if (field === 'campaignString') return campaignStr;
-        if (field === 'CampaignName') return nextCampaignValues['CampaignName'] || '';
-        if (field === 'mediaOwner') return state.mediaOwner || 'UNK';
-        return nextCampaignValues[field] || nextAdsetValues[field] || nextAdValues[field] || '';
-    });
-    const finalCid = cidParts.filter(p => p && p.trim().length > 0).join('/');
+    const finalCid = generateCid(state.cidStructure, nextCampaignValues, nextAdsetValues, nextAdValues, state.mediaOwner, campaignStr);
 
     const adsetStr = resolveStructure(state.structures.adset, nextAdsetValues, { parentCampaign: campaignStr }, { transform: (s) => s });
     const adStr = resolveStructure(state.structures.ad, nextAdValues, { 
@@ -577,13 +583,7 @@ export const useTaxonomyStore = create<TaxonomyState>((set, get) => ({
       const campaignStr = resolveStructure(state.structures.campaign, draft.campaignValues, {}, { transform: (s) => s });
       
       // Calculate CID (Dynamic)
-      const cidParts = state.cidStructure.map(field => {
-        if (field === 'campaignString') return campaignStr;
-        if (field === 'CampaignName') return draft.campaignValues['CampaignName'] || '';
-        if (field === 'mediaOwner') return state.mediaOwner || 'UNK';
-        return draft.campaignValues[field] || draft.adsetValues[field] || draft.adValues[field] || '';
-      });
-      const finalCid = cidParts.filter(p => p && p.trim().length > 0).join('/');
+      const finalCid = generateCid(state.cidStructure, draft.campaignValues, draft.adsetValues, draft.adValues, state.mediaOwner, campaignStr);
 
       const adsetStr = resolveStructure(state.structures.adset, draft.adsetValues, { parentCampaign: campaignStr }, { transform: (s) => s });
       const adStr = resolveStructure(state.structures.ad, draft.adValues, { 
